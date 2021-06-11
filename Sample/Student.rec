@@ -1,0 +1,7 @@
+﻿<Record>
+Public Class Studnt(
+	ID = 0, 
+	Name = "", 
+	Grades As double, 
+	Address = (City := "", Street := "", No := 0)	
+)
