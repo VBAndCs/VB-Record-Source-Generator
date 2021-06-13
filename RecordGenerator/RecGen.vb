@@ -22,6 +22,8 @@ Class RecordGenerator
             Dim recFiles = From file In context.AdditionalFiles
                            Where file.Path.ToLower().EndsWith(".rec")
 
+            If Not recFiles.Any Then Return
+
             context.AddSource(NameOf(DefaultOfStruct), SourceText.From(DefaultOfStruct, Encoding.UTF8))
             context.AddSource(NameOf(DefaultOfTStruct), SourceText.From(DefaultOfTStruct, Encoding.UTF8))
             context.AddSource(NameOf(DefaultStruct), SourceText.From(DefaultStruct, Encoding.UTF8))
@@ -84,24 +86,53 @@ Class RecordGenerator
         End If
 
         Dim Properties As New List(Of PropertyInfo)
+        Dim Methods As New List(Of String)
 
         For Each member As ParameterSyntax In members.ChildNodes
-            Dim AccessAttr = member.AttributeLists
-            Dim prop As PropertyInfo
-            If AccessAttr.Count > 0 Then
-                prop = GetPropertyInfo(AccessAttr(0))
-            End If
-            prop.IsReadOnly = prop.IsReadOnly Or DefaultPropInfo.IsReadOnly
-            prop.IsKey = prop.IsKey Or DefaultPropInfo.IsKey
+            Dim valueExpr = member.Default?.DescendantNodes?(0)
 
-            prop.Name = member.Identifier.ToString()
-            prop.Type = member.AsClause?.ToString()
-            prop.DefaultValue = member.Default?.ToString()
-            If prop.Type = "" Then
-                prop.Type = If(prop.DefaultValue = "", "As Object", InferType(prop.DefaultValue))
+            If TypeOf valueExpr Is LambdaExpressionSyntax Then
+                Dim lanbdaExpr As LambdaExpressionSyntax = valueExpr
+                Dim Header = lanbdaExpr.SubOrFunctionHeader
+                Dim MethodType = Header.DeclarationKeyword.Text
+                Dim isSub = MethodType.ToLower() = "sub"
+                Dim AsClause = ""
+                If Not isSub Then
+                    AsClause = If(Header.AsClause, InferReturnType(member.Default.ToString()))
+                End If
+                Dim lambdaBody As String = ""
+                If TypeOf lanbdaExpr Is SingleLineLambdaExpressionSyntax Then
+                    lambdaBody = If(isSub, "", "Return ") & CType(lanbdaExpr, SingleLineLambdaExpressionSyntax).Body.ToString()
+                Else
+                    For Each statement In CType(lanbdaExpr, MultiLineLambdaExpressionSyntax).Statements
+                        lambdaBody &= statement.ToString() & vbCrLf
+                    Next
+                    lambdaBody = lambdaBody.Trim({ChrW(10), ChrW(13)})
+                End If
+
+                Methods.Add(
+$"    Public {MethodType} { member.Identifier}{Header.ParameterList} {AsClause}
+        {lambdaBody}
+    End {MethodType}")
+
+            Else
+                Dim AccessAttr = member.AttributeLists
+                Dim prop As PropertyInfo
+                If AccessAttr.Count > 0 Then
+                    prop = GetPropertyInfo(AccessAttr(0))
+                End If
+                prop.IsReadOnly = prop.IsReadOnly Or DefaultPropInfo.IsReadOnly
+                prop.IsKey = prop.IsKey Or DefaultPropInfo.IsKey
+
+                prop.Name = member.Identifier.ToString()
+                prop.Type = member.AsClause?.ToString()
+                prop.DefaultValue = member.Default?.ToString()
+                If prop.Type = "" Then
+                    prop.Type = If(prop.DefaultValue = "", "As Object", InferType(prop.DefaultValue))
+                End If
+                prop.Type = prop.Type.Substring(2).Trim
+                Properties.Add(prop)
             End If
-            prop.Type = prop.Type.Substring(2).Trim
-            Properties.Add(prop)
         Next
 
         ' ------------------------Generate the record class----------------------------
@@ -145,6 +176,12 @@ $"        If [{p.camelCaseName}].HasValue
         record.Append(body.ToString())
         record.AppendLine("    End Sub")
         record.AppendLine()
+
+        ' Methods for lambdas
+        For Each method In Methods
+            record.AppendLine(method)
+            record.AppendLine()
+        Next
 
         ' With
         record.AppendLine("    Public Function [With](")
@@ -285,6 +322,9 @@ $"    Public Shared Operator =(FirstRecord As {className}{typeParams}, secondRec
 
     End Sub
 
+    Private Function InferReturnType(lambda As String) As String
+        Return "As Object"
+    End Function
     Private Function InferType(defaultValue As String) As String
         Dim code = $"
 Class Test
