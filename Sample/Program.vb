@@ -1,7 +1,8 @@
 Imports System
 
 Module Program
-    Sub Main(args As String())
+    Sub Main(args As String())        
+
         Dim Adam As New Studnt(1, "Adam", 80.5, ("New Yourk", "Hello St.", 10))
         Console.WriteLine(Adam)
         Adam.Print()

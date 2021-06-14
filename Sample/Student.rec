@@ -5,4 +5,4 @@ Public Class Studnt(
 	Grades As double, 
 	Address = (City := "", Street := "", No := 0)	,
   Print = Sub() Console.WriteLine($"Student `{Name}` got {Grades}" )
-)
+) 
