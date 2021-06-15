@@ -4,7 +4,8 @@
 Imports System.Text
 Imports Microsoft.CodeAnalysis
 Imports Microsoft.CodeAnalysis.Text
-
+Imports Microsoft.CodeAnalysis.VisualBasic
+Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
 
 <Generator(LanguageNames.VisualBasic)>
 Public Class RecordGenerator
@@ -27,15 +28,13 @@ Public Class RecordGenerator
             context.AddSource(NameOf(OptionalStruct), SourceText.From(OptionalStruct, Encoding.UTF8))
             context.AddSource(NameOf(HelperClass), SourceText.From(HelperClass, Encoding.UTF8))
 
-            Dim refs = RecordParser.References
-            For Each ref In context.Compilation.References
-                If Not refs.Any(Function(r) r.Display = ref.Display) Then
-                    refs.Add(ref)
-                End If
-            Next
+            Dim comp = context.Compilation
+            RecordParser.AddReferences(comp.References)
+            RecordParser.AddReferences(comp.ExternalReferences)
+            RecordParser.AddReferences(comp.DirectiveReferences)
 
             For Each recFile In recFiles
-                RecordParser.Parse(context, recFile.GetText().ToString())
+                RecordParser.Generate(context, recFile.GetText().ToString())
             Next
         Catch ex As Exception
             Console.WriteLine(ex.Message)

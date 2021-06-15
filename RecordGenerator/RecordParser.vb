@@ -10,11 +10,14 @@ Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
 Public Class RecordParser
 
     Public Shared Sub Debug(code As String)
-        Parse(Nothing, code)
+        Generate(Nothing, code)
     End Sub
 
-    Public Shared Sub Parse(context? As GeneratorExecutionContext, code As String)
-        Dim importsList As New StringBuilder()
+    Public Shared importsList As New StringBuilder()
+
+    Public Shared Sub Generate(context? As GeneratorExecutionContext, code As String)
+        RecordParser.importsList.Clear()
+
         For Each node In SyntaxFactory.ParseSyntaxTree(code).GetRoot.ChildNodes
             If node.Kind <> SyntaxKind.ImportsStatement Then
                 code = code.Substring(node.SpanStart)
@@ -22,9 +25,13 @@ Public Class RecordParser
             End If
 
             For Each ImportsClause In CType(node, ImportsStatementSyntax).ImportsClauses
-                importsList.AppendLine("Imports " & ImportsClause.ToString)
+                RecordParser.importsList.AppendLine("Imports " & ImportsClause.ToString)
             Next
         Next
+        Parse(context, code)
+    End Sub
+
+    Public Shared Sub Parse(context? As GeneratorExecutionContext, code As String)
 
         Dim tokens = SyntaxFactory.ParseTokens(code).ToArray
         For i = 0 To tokens.Length - 1
@@ -38,7 +45,7 @@ Public Class RecordParser
                 End If
                 Dim definition = code.Substring(0, token.SpanStart)
                 Dim members = SyntaxFactory.ParseParameterList(code.Substring(token.SpanStart))
-                GenerateRecord(context, importsList.ToString(), definition, members)
+                GenerateRecord(context, definition, members)
                 Dim pos = token.SpanStart + members.Span.Length
                 If pos < code.Length Then Parse(context, code.Substring(pos))
                 Exit For
@@ -48,7 +55,6 @@ Public Class RecordParser
 
     Private Shared Sub GenerateRecord(
                        context? As GeneratorExecutionContext,
-                       importsList As String,
                        definition As String,
                        paramList As ParameterListSyntax)
 
@@ -63,9 +69,15 @@ Public Class RecordParser
         Dim isClass = (From token In tokens
                        Where token.Kind = SyntaxKind.ClassKeyword).Count > 0
 
-        Dim className = (From token In tokens
-                         Where token.Kind = SyntaxKind.IdentifierToken).First.ToString
+        Dim result = (From token In tokens
+                      Where token.Kind = SyntaxKind.IdentifierToken)
 
+
+        If Not result.Any Then
+            Throw New Exception("Supply a name for the class")
+        End If
+
+        Dim className = result.First.ToString()
         Dim typeParams = ""
         Dim lastToken = tokens(tokens.Length - 1)
         If lastToken.Kind = SyntaxKind.TypeParameterList Then
@@ -79,16 +91,15 @@ Public Class RecordParser
             Dim valueExpr = member.Default?.DescendantNodes?(0)
 
             If TypeOf valueExpr Is LambdaExpressionSyntax Then
-                LambdaToMethod(importsList, Methods, Properties, member, valueExpr)
+                LambdaToMethod(Methods, Properties, member, valueExpr)
             Else
-                AddPropertyInfo(importsList, Methods, Properties, DefaultPropInfo, member)
+                AddPropertyInfo(Methods, Properties, DefaultPropInfo, member)
             End If
         Next
 
         ' ------------------------Generate the record class/struct ----------------------------
 
-        Dim record As New StringBuilder(importsList)
-
+        Dim record As New StringBuilder(importsList.ToString())
         record.AppendLine()
         record.AppendLine(definition)
         record.AppendLine()
@@ -111,8 +122,7 @@ Public Class RecordParser
     End Sub
 
     Private Shared Sub LambdaToMethod(
-                                     importsList As String,
-                                      methods As List(Of String),
+                                     methods As List(Of String),
                                      properties As List(Of PropertyInfo),
                                      param As ParameterSyntax,
                                      lanbdaExpr As LambdaExpressionSyntax)
@@ -122,7 +132,7 @@ Public Class RecordParser
         Dim isSub = MethodType.ToLower() = "sub"
         Dim AsClause = ""
         If Not isSub Then
-            AsClause = If(Header.AsClause, InferType(importsList, methods, properties, param.Default.ToString(), True))
+            AsClause = If(Header.AsClause, InferType(methods, properties, param.Default.ToString(), True))
         End If
         Dim lambdaBody As String = ""
         If TypeOf lanbdaExpr Is SingleLineLambdaExpressionSyntax Then
@@ -141,7 +151,6 @@ $"    Public {MethodType} { param.Identifier}{Header.ParameterList} {AsClause}
     End Sub
 
     Private Shared Sub AddPropertyInfo(
-                                      importsList As String,
                                       methods As List(Of String),
                                       properties As List(Of PropertyInfo),
                                       DefaultPropInfo As PropertyInfo,
@@ -159,7 +168,7 @@ $"    Public {MethodType} { param.Identifier}{Header.ParameterList} {AsClause}
         prop.Type = param.AsClause?.ToString()
         prop.DefaultValue = param.Default?.ToString()
         If prop.Type = "" Then
-            prop.Type = If(prop.DefaultValue = "", "As Object", InferType(importsList, methods, properties, prop.DefaultValue))
+            prop.Type = If(prop.DefaultValue = "", "As Object", InferType(methods, properties, prop.DefaultValue))
         End If
         prop.Type = prop.Type.Substring(2).Trim
         properties.Add(prop)
@@ -361,8 +370,16 @@ $"        If [{p.camelCaseName}].HasValue
         End Get
     End Property
 
+    Shared Sub AddReferences(references As IEnumerable(Of MetadataReference))
+        Dim refs = RecordParser.References
+        For Each ref In references
+            If Not refs.Any(Function(r) r.Display = ref.Display) Then
+                refs.Add(ref)
+            End If
+        Next
+    End Sub
+
     Private Shared Function InferType(
-                                     importsList As String,
                                      methods As List(Of String),
                                      properties As List(Of PropertyInfo),
                                      defaultValue As String,

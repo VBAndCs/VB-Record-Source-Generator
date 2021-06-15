@@ -4,8 +4,8 @@ Imports System.Collections
 <Record>
 Public Class Student(
 	ID = 0, 
-	Name = "", 
+	Name = "",
 	Grades As double, 
-	Address = (City := "", Street := "", No := 0)	,
-    GetString = Function() Name & Grades
+	Address = (City := "", Street := "", No := 0),
+    GetString = Function() "Name" & Grades
 )

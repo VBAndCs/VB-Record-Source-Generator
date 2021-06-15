@@ -8,13 +8,17 @@ Namespace RecordGeneratorTests
             Dim rec As String = <![CDATA[
 Imports System.Text, System.IO
 Imports System.Collections
+
+Public Class Person(
+	ID = 0, 
+	Name = ""
+)
+
 <Record>
 Public Class Student(
-	ID = 0, 
-	Name = "", 
 	Grades As double, 
-	Address = (City := "", Street := "", No := 0)	,
-    Print = Function() "Test" 
+	Address = (City := "", Street := "", No := 0),
+    GetString = Function() Name & Grades
 )
 ]]>.Value
 
