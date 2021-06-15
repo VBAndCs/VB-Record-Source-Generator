@@ -298,18 +298,7 @@ $"    Public Shared Operator =(FirstRecord As {className}{typeParams}, secondRec
     Private Shared Sub AddToString(className As String, Properties As List(Of PropertyInfo), record As StringBuilder)
         record.AppendLine(
 $"    Public Overrides Function ToString() As String
-        Dim stringBuilder As New System.Text.StringBuilder()
-        stringBuilder.Append(""{className}"")
-        stringBuilder.Append("" {{ "")")
-        Dim AddSep = False
-        For Each p In Properties
-            Dim s = If(AddSep, ", ", "")
-            record.AppendLine($"        stringBuilder.Append($""{s}{p.Name} = {{_{p.Name}}}"")")
-            AddSep = True
-        Next
-        record.AppendLine(
-"        stringBuilder.Append("" }"")
-        Return stringBuilder.ToString()
+        Return ""{className}"" & "" {{ "" & RecordHelper.GetPropertyValuePairs(Me) & "" }}""
     End Function")
 
         record.AppendLine()
@@ -394,9 +383,6 @@ End Class
 
         Dim syntaxTree = SyntaxFactory.ParseSyntaxTree(code)
         Dim comp = VisualBasicCompilation.Create("Test", {syntaxTree}, References)
-
-        comp = VisualBasicCompilation.Create("Test", {syntaxTree}, References)
-
         Dim sem = comp.GetSemanticModel(syntaxTree)
         Dim variableDeclaration = syntaxTree.GetRoot().DescendantNodes().OfType(Of LocalDeclarationStatementSyntax)().First
 

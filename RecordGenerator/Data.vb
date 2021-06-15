@@ -101,4 +101,21 @@ Public Structure [Optional](Of T)
 End Structure
 ]]>.Value
 
+    Friend HelperClass As String = <![CDATA[
+Public Class RecordHelper
+    Public Function GetPropertyValuePairs(obj As Object) As String
+        Dim sb As New System.Text.StringBuilder
+        Dim AddSep = False
+        For Each p In obj.GetType.GetProperties(Reflection.BindingFlags.Public Or Reflection.BindingFlags.Instance)
+            If AddSep Then
+                sb.Append(", ")
+            Else
+                AddSep = True
+            End If
+            sb.Append($"{p.Name} = {p.GetValue(obj, Nothing)}")
+        Next
+        Return sb.ToString().TrimEnd({","c, " "c})
+    End Function
+End Class
+]]>.Value
 End Module

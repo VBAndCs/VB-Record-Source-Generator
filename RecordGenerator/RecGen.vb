@@ -25,6 +25,7 @@ Public Class RecordGenerator
             context.AddSource(NameOf(DefaultOfTStruct), SourceText.From(DefaultOfTStruct, Encoding.UTF8))
             context.AddSource(NameOf(DefaultStruct), SourceText.From(DefaultStruct, Encoding.UTF8))
             context.AddSource(NameOf(OptionalStruct), SourceText.From(OptionalStruct, Encoding.UTF8))
+            context.AddSource(NameOf(HelperClass), SourceText.From(HelperClass, Encoding.UTF8))
 
             Dim refs = RecordParser.References
             For Each ref In context.Compilation.References

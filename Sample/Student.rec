@@ -7,5 +7,5 @@ Public Class Student(
 	Name = "", 
 	Grades As double, 
 	Address = (City := "", Street := "", No := 0)	,
-    GetBuilder = Function() Name & Grades
+    GetString = Function() Name & Grades
 )
