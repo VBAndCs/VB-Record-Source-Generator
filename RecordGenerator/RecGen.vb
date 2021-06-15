@@ -7,16 +7,14 @@ Imports Microsoft.CodeAnalysis.Text
 
 
 <Generator(LanguageNames.VisualBasic)>
-Class RecordGenerator
+Public Class RecordGenerator
     Implements ISourceGenerator
 
-    Dim context As GeneratorExecutionContext
     Public Sub Initialize(context As GeneratorInitializationContext) Implements ISourceGenerator.Initialize
 
     End Sub
 
     Public Sub Execute(context As GeneratorExecutionContext) Implements ISourceGenerator.Execute
-        Console.WriteLine(context.AdditionalFiles.Length)
         Try
             Dim recFiles = From file In context.AdditionalFiles
                            Where file.Path.ToLower().EndsWith(".rec")
@@ -27,10 +25,15 @@ Class RecordGenerator
             context.AddSource(NameOf(DefaultOfTStruct), SourceText.From(DefaultOfTStruct, Encoding.UTF8))
             context.AddSource(NameOf(DefaultStruct), SourceText.From(DefaultStruct, Encoding.UTF8))
             context.AddSource(NameOf(OptionalStruct), SourceText.From(OptionalStruct, Encoding.UTF8))
-            Me.context = context
+
+            Dim refs = RecordParser.References
+            For Each ref In context.Compilation.References
+                If Not refs.Any(Function(r) r.Display = ref.Display) Then
+                    refs.Add(ref)
+                End If
+            Next
 
             For Each recFile In recFiles
-                Dim generatorDocuments = New List(Of (documentName As String, source As String))
                 RecordParser.Parse(context, recFile.GetText().ToString())
             Next
         Catch ex As Exception

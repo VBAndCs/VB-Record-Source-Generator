@@ -1,8 +1,11 @@
-﻿<Record>
-Public Class Studnt(
+﻿Imports System.Text, System.IO
+Imports System.Collections
+
+<Record>
+Public Class Student(
 	ID = 0, 
 	Name = "", 
 	Grades As double, 
 	Address = (City := "", Street := "", No := 0)	,
-  Print = Sub() Console.WriteLine($"Student `{Name}` got {Grades}" )
-) 
+    GetBuilder = Function() Name & Grades
+)
