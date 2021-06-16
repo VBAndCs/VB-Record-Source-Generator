@@ -17,22 +17,14 @@ Namespace RecordGeneratorTests
         <TestMethod>
         Public Sub Execute()
             Dim rec As String = <![CDATA[
-Imports System.Text, System.IO
-Imports System.Collections
-
-Public Class Person(
-	ID = 0, 
-	Name = "", 
-    Address = (City := "", Street := "", No := 0)
-)
-
-<Record>
 Public Class Student(
     Name As String,
     ClassRoom = 0,
 	Grades As double, 
-    Print = Function() Name & Grades
-) Inherits Person
+    Print = Function() As String
+                     return Name & Grades
+                End Function
+)
 ]]>.Value
 
             Dim result = GetGeneratedOutput(rec)

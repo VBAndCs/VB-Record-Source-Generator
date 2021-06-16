@@ -12,7 +12,9 @@ Public Class Student(
     Name As String,
     ClassRoom = 0,
 	Grades As double, 
-    Print = Function() Name & Grades
+    Print = Function() As String
+                     return Name & Grades
+                End Function
 ) Inherits Person
 
 Public Class UniStudent(

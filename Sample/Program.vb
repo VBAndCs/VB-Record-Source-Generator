@@ -27,3 +27,16 @@ End Module
 Public Class Test
     Public Property [Date] As Date
 End Class
+
+{
+
+Class Test_00000000000001
+
+    Sub Foo()
+        Dim a = 0
+    End Sub
+
+    Public Property [Name] As String
+
+End Class
+}

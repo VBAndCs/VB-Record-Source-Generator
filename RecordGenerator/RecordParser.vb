@@ -12,6 +12,7 @@ Public Class RecordParser
     Private Const StringQuote As String = "__QUOTE__"
 
     Public Shared Sub Debug(code As String)
+        CurrentCompilation = VisualBasicCompilation.Create("Debug")
         Generate(Nothing, code)
     End Sub
 
@@ -174,7 +175,8 @@ Option Compare Binary
         Dim isSub = MethodType.ToLower() = "sub"
         Dim AsClause = ""
         If Not isSub Then
-            AsClause = If(Header.AsClause, InferType(inheritance, methods, properties, param.Default.ToString(), True))
+            AsClause = Header.AsClause?.ToString()
+            If AsClause <> "" Then InferType(inheritance, methods, properties, param.Default.ToString(), True)
         End If
         Dim lambdaBody As String = ""
         If TypeOf lanbdaExpr Is SingleLineLambdaExpressionSyntax Then
