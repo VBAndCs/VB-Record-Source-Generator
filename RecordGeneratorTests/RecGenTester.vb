@@ -20,17 +20,23 @@ Namespace RecordGeneratorTests
 Imports System.Text, System.IO
 Imports System.Collections
 
-<Record>
-Public Class Student(
+Public Class Person(
 	ID = 0, 
 	Name = "", 
-	Grades As double, 
-	Address = (City := "", Street := "", No := 0)	,
-    GetString = Function() Name & Grades
+    Address = (City := "", Street := "", No := 0)
 )
+
+<Record>
+Public Class Student(
+    Name As String,
+    ClassRoom = 0,
+	Grades As double, 
+    Print = Function() Name & Grades
+) Inherits Person
 ]]>.Value
 
             Dim result = GetGeneratedOutput(rec)
+            Stop
 
             If result.Diagnostics.Length > 0 Then
                 Console.WriteLine("Diagnostics:")

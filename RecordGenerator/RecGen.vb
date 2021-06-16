@@ -28,10 +28,13 @@ Public Class RecordGenerator
             context.AddSource(NameOf(OptionalStruct), SourceText.From(OptionalStruct, Encoding.UTF8))
             context.AddSource(NameOf(HelperClass), SourceText.From(HelperClass, Encoding.UTF8))
 
-            Dim comp = context.Compilation
-            RecordParser.AddReferences(comp.References)
-            RecordParser.AddReferences(comp.ExternalReferences)
-            RecordParser.AddReferences(comp.DirectiveReferences)
+            RecordParser.CurrentCompilation = context.Compilation.AddSyntaxTrees(
+                    SyntaxFactory.ParseSyntaxTree(DefaultOfStruct),
+                    SyntaxFactory.ParseSyntaxTree(DefaultOfTStruct),
+                    SyntaxFactory.ParseSyntaxTree(DefaultStruct),
+                    SyntaxFactory.ParseSyntaxTree(OptionalStruct),
+                    SyntaxFactory.ParseSyntaxTree(HelperClass)
+            )
 
             For Each recFile In recFiles
                 RecordParser.Generate(context, recFile.GetText().ToString())

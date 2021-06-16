@@ -8,6 +8,8 @@ Imports Microsoft.CodeAnalysis.VisualBasic
 Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
 
 Public Class RecordParser
+    Public Shared CurrentCompilation As Compilation = Nothing
+    Private Const StringQuote As String = "__QUOTE__"
 
     Public Shared Sub Debug(code As String)
         Generate(Nothing, code)
@@ -16,7 +18,7 @@ Public Class RecordParser
     Public Shared importsList As New StringBuilder()
 
     Public Shared Sub Generate(context? As GeneratorExecutionContext, code As String)
-        RecordParser.importsList.Clear()
+        importsList.Clear()
 
         For Each node In SyntaxFactory.ParseSyntaxTree(code).GetRoot.ChildNodes
             If node.Kind <> SyntaxKind.ImportsStatement Then
@@ -25,9 +27,10 @@ Public Class RecordParser
             End If
 
             For Each ImportsClause In CType(node, ImportsStatementSyntax).ImportsClauses
-                RecordParser.importsList.AppendLine("Imports " & ImportsClause.ToString)
+                importsList.AppendLine("Imports " & ImportsClause.ToString())
             Next
         Next
+
         Parse(context, code)
     End Sub
 
@@ -45,16 +48,30 @@ Public Class RecordParser
                 End If
                 Dim definition = code.Substring(0, token.SpanStart)
                 Dim members = SyntaxFactory.ParseParameterList(code.Substring(token.SpanStart))
-                GenerateRecord(context, definition, members)
+
+                'GenerateRecord(context, definition, members)
+                'Dim pos = token.SpanStart + members.Span.Length
+                'If pos < code.Length Then Parse(context, code.Substring(pos))
+                'Exit For
+
                 Dim pos = token.SpanStart + members.Span.Length
+                If pos >= code.Length Then Return
+                Dim nextNode = SyntaxFactory.ParseSyntaxTree(code.Substring(pos)).GetRoot().ChildNodes(0)
+                Dim inheritance = ""
+                If nextNode?.Kind = SyntaxKind.InheritsStatement Then
+                    inheritance = nextNode.ToString()
+                    pos += nextNode.Span.Length + 1
+                End If
+                GenerateRecord(context, inheritance, definition, members)
                 If pos < code.Length Then Parse(context, code.Substring(pos))
-                Exit For
+                Return
             End If
         Next
     End Sub
 
     Private Shared Sub GenerateRecord(
                        context? As GeneratorExecutionContext,
+                       inheritance As String,
                        definition As String,
                        paramList As ParameterListSyntax)
 
@@ -74,7 +91,7 @@ Public Class RecordParser
 
 
         If Not result.Any Then
-            Throw New Exception("Supply a name for the class")
+            Throw New Exception("Record must have a name")
         End If
 
         Dim className = result.First.ToString()
@@ -87,41 +104,66 @@ Public Class RecordParser
         Dim Properties As New List(Of PropertyInfo)
         Dim Methods As New List(Of String)
 
+        If inheritance <> "" Then AddInheritedPropertiesInfo(inheritance, Properties)
+
         For Each member As ParameterSyntax In paramList.ChildNodes
             Dim valueExpr = member.Default?.DescendantNodes?(0)
 
             If TypeOf valueExpr Is LambdaExpressionSyntax Then
-                LambdaToMethod(Methods, Properties, member, valueExpr)
+                LambdaToMethod(inheritance, Methods, Properties, member, valueExpr)
             Else
-                AddPropertyInfo(Methods, Properties, DefaultPropInfo, member)
+                AddPropertyInfo(inheritance, Methods, Properties, DefaultPropInfo, member)
             End If
         Next
 
         ' ------------------------Generate the record class/struct ----------------------------
 
-        Dim record As New StringBuilder(importsList.ToString())
+        Dim record As New StringBuilder(
+"Option Explicit on
+Option Strict off
+Option Infer On
+Option Compare Binary
+
+")
+
+        record.Append(importsList.ToString())
+
+        If importsList.ToString().ToLower().IndexOf("imports system.componentmodel" & vbCrLf) = -1 Then
+            record.AppendLine("Imports System.ComponentModel")
+            record.AppendLine()
+        End If
+
         record.AppendLine()
+
         record.AppendLine(definition)
+        record.AppendLine("    " & inheritance)
         record.AppendLine()
-        record.AppendLine(AddProperties(Properties))
-        Dim params = AddConstructor(Properties, record)
-        record.AppendLine(AddMethods(Methods))
-        AddWith(className, typeParams, Properties, record, params)
-        AddWithProps(className, typeParams, Properties, record)
-        AddClone(className, typeParams, record)
-        AddToString(className, Properties, record)
-        AddEquals(className, typeParams, Properties, record)
-        AddEqualityOps(className, typeParams, record)
-        AddTuplesOps(className, typeParams, Properties, record)
+        record.AppendLine(WriteProperties(Properties))
+        Dim params = WriteConstructor(Properties, record)
+        record.AppendLine(WriteMethods(Methods))
+        WriteWith(className, typeParams, Properties, record, params)
+        WriteWithProps(className, typeParams, Properties, record)
+        WriteClone(className, typeParams, record)
+        WriteToString(className, Properties, record)
+        WriteEquals(className, typeParams, Properties, record)
+        WriteEqualityOps(className, typeParams, record)
+        WriteTuplesOps(className, typeParams, Properties, record)
         record.Append(If(isClass, "End Class", "End Structure"))
 
         If context.HasValue Then
-            context.Value.AddSource(className & "Record", SourceText.From(record.ToString(), Encoding.UTF8))
+            Dim rec = record.ToString()
+            context.Value.AddSource(className & "Record", SourceText.From(rec, Encoding.UTF8))
+            Dim syntx = SyntaxFactory.ParseSyntaxTree(rec)
+            CurrentCompilation = CurrentCompilation.AddSyntaxTrees(syntx)
+            'Dim variableDeclaration = SyntaxTree.GetRoot().DescendantNodes().OfType(Of LocalDeclarationStatementSyntax)().First
+            'Dim t = CurrentCompilation.GetSemanticModel(syntx).GetTypeInfo()
+
         End If
 
     End Sub
 
     Private Shared Sub LambdaToMethod(
+                                     inheritance As String,
                                      methods As List(Of String),
                                      properties As List(Of PropertyInfo),
                                      param As ParameterSyntax,
@@ -132,7 +174,7 @@ Public Class RecordParser
         Dim isSub = MethodType.ToLower() = "sub"
         Dim AsClause = ""
         If Not isSub Then
-            AsClause = If(Header.AsClause, InferType(methods, properties, param.Default.ToString(), True))
+            AsClause = If(Header.AsClause, InferType(inheritance, methods, properties, param.Default.ToString(), True))
         End If
         Dim lambdaBody As String = ""
         If TypeOf lanbdaExpr Is SingleLineLambdaExpressionSyntax Then
@@ -151,57 +193,87 @@ $"    Public {MethodType} { param.Identifier}{Header.ParameterList} {AsClause}
     End Sub
 
     Private Shared Sub AddPropertyInfo(
+                                      inheritance As String,
                                       methods As List(Of String),
                                       properties As List(Of PropertyInfo),
                                       DefaultPropInfo As PropertyInfo,
-                                      param As ParameterSyntax)
+                                      param As ParameterSyntax
+                                  )
 
         Dim AccessAttr = param.AttributeLists
-        Dim prop As PropertyInfo
-        If AccessAttr.Count > 0 Then
-            prop = GetPropertyInfo(AccessAttr(0))
+        Dim prop As PropertyInfo = Nothing
+        If AccessAttr.Count > 0 Then prop = GetPropertyInfo(AccessAttr(0))
+
+        prop.Name = param.Identifier.ToString()
+        If inheritance <> "" Then
+            For i = 0 To properties.Count - 1
+                Dim baseProp = properties(i)
+                If baseProp.Name.ToLower() = prop.Name.ToLower() Then
+                    prop.IsReadOnly = baseProp.IsReadOnly
+                    prop.IsKey = baseProp.IsKey Or prop.IsKey Or DefaultPropInfo.IsKey
+                    prop.Type = baseProp.Type
+                    prop.DefaultValue = If(param.Default?.ToString(), baseProp.DefaultValue)
+                    prop.InheritanceModifier = If(baseProp.AddOverrides, "Overrides", "Shadows")
+                    properties(i) = prop
+                    Exit Sub
+                End If
+            Next
         End If
+
         prop.IsReadOnly = prop.IsReadOnly Or DefaultPropInfo.IsReadOnly
         prop.IsKey = prop.IsKey Or DefaultPropInfo.IsKey
 
-        prop.Name = param.Identifier.ToString()
         prop.Type = param.AsClause?.ToString()
         prop.DefaultValue = param.Default?.ToString()
         If prop.Type = "" Then
-            prop.Type = If(prop.DefaultValue = "", "As Object", InferType(methods, properties, prop.DefaultValue))
+            prop.Type = If(prop.DefaultValue = "", "As Object", InferType(inheritance, methods, properties, prop.DefaultValue))
         End If
         prop.Type = prop.Type.Substring(2).Trim
         properties.Add(prop)
     End Sub
 
-    Private Shared Function AddProperties(Properties As List(Of PropertyInfo)) As String
+
+    Private Shared Function WriteProperties(Properties As List(Of PropertyInfo)) As String
         Dim props As New StringBuilder
         For Each p In Properties
+            If p.IsKey Then
+                props.AppendLine("   <Key>")
+            End If
+
+            If p.DefaultValue <> "" Then
+                props.AppendLine($"   <DefaultValue(""{ p.DefaultValue.Replace("""", StringQuote)}"")>")
+            End If
+
             props.Append("   Public ")
+            If p.InheritanceModifier <> "" Then props.Append(p.InheritanceModifier & " ")
             If p.IsReadOnly = True Then props.Append("ReadOnly ")
             props.Append($"Property [{p.Name}] As {p.Type}")
-            props.AppendLine()
+            props.AppendLine(vbCrLf)
         Next
         props.AppendLine()
         Return props.ToString()
     End Function
 
-    Private Shared Function AddConstructor(Properties As List(Of PropertyInfo), record As StringBuilder) As String
+    Private Shared Function WriteConstructor(Properties As List(Of PropertyInfo), record As StringBuilder) As String
         Dim params As New StringBuilder
         Dim body As New StringBuilder
-        Dim AddSep = False
+        Dim addSep = False
 
         record.AppendLine("    Public Sub New(")
 
         For Each p In Properties
-            If AddSep Then params.Append("," & vbCrLf & "")
+            If addSep Then
+                params.Append("," & vbCrLf & "")
+            Else
+                addSep = True
+            End If
+
             params.Append($"                Optional [{p.camelCaseName}] As [Optional](Of {p.Type}) = Nothing")
-            AddSep = True
             body.AppendLine(
 $"        If [{p.camelCaseName}].HasValue
-            _{p.camelCaseName} = [{p.camelCaseName}].Value
+            Me.{p.Name} = [{p.camelCaseName}].Value
         Else
-            _{p.camelCaseName} {If(p.DefaultValue = "", "= Nothing", p.DefaultValue)}
+            Me.{p.Name} {If(p.DefaultValue = "", "= Nothing", p.DefaultValue)}
         End If
 ")
         Next
@@ -214,7 +286,7 @@ $"        If [{p.camelCaseName}].HasValue
         Return params.ToString
     End Function
 
-    Private Shared Function AddMethods(Methods As List(Of String)) As String
+    Private Shared Function WriteMethods(Methods As List(Of String)) As String
         Dim sb As New StringBuilder
         For Each method In Methods
             sb.AppendLine(method)
@@ -223,20 +295,21 @@ $"        If [{p.camelCaseName}].HasValue
         Return sb.ToString
     End Function
 
-    Private Shared Sub AddTuplesOps(className As String, typeParams As String, Properties As List(Of PropertyInfo), record As StringBuilder)
+    Private Shared Sub WriteTuplesOps(className As String, typeParams As String, Properties As List(Of PropertyInfo), record As StringBuilder)
         For n = 1 To Properties.Count - 1
             Dim body As New StringBuilder
-            Dim AddSep = False
+            Dim addSep = False
             record.Append($"    Public Shared Widening Operator CType(anotherRecord As {className}{typeParams}) As (")
             For i = 0 To n
                 Dim p = Properties(i)
-                If AddSep Then
+                If addSep Then
                     record.Append(", ")
                     body.Append(", ")
+                Else
+                    addSep = True
                 End If
-                record.Append($"{p.Name} As {p.Type}")
+                record.Append($"[{p.Name}] As {p.Type}")
                 body.Append($"anotherRecord.{p.Name}")
-                AddSep = True
             Next
             record.AppendLine(")")
             record.Append("        Return (")
@@ -248,17 +321,19 @@ $"        If [{p.camelCaseName}].HasValue
             record.Append($"    Public Shared Widening Operator CType(fromTuple As (")
             Dim methodType = "Operator"
             body.Clear()
-            AddSep = False
+            addSep = False
 
             For i = 0 To n
                 Dim p = Properties(i)
-                If AddSep Then
+                If addSep Then
                     record.Append(", ")
                     body.Append(", ")
+                Else
+                    addSep = True
                 End If
-                record.Append($"{p.Name} As {p.Type}")
+
+                record.Append($"[{p.Name}] As {p.Type}")
                 body.Append($"fromTuple.{p.Name}")
-                AddSep = True
             Next
             record.AppendLine($")) As {className}{typeParams}")
             record.Append($"        Return new {className}{typeParams}(")
@@ -269,7 +344,7 @@ $"        If [{p.camelCaseName}].HasValue
         Next
     End Sub
 
-    Private Shared Sub AddEqualityOps(className As String, typeParams As String, record As StringBuilder)
+    Private Shared Sub WriteEqualityOps(className As String, typeParams As String, record As StringBuilder)
         record.AppendLine(
 $"    Public Shared Operator =(FirstRecord As {className}{typeParams}, secondRecord As {className}{typeParams}) As Boolean
         Return FirstRecord.Equals(secondRecord)
@@ -281,7 +356,7 @@ $"    Public Shared Operator =(FirstRecord As {className}{typeParams}, secondRec
         record.AppendLine()
     End Sub
 
-    Private Shared Sub AddEquals(className As String, typeParams As String, Properties As List(Of PropertyInfo), record As StringBuilder)
+    Private Shared Sub WriteEquals(className As String, typeParams As String, Properties As List(Of PropertyInfo), record As StringBuilder)
         Dim keys = From p In Properties
                    Where p.IsKey
 
@@ -304,7 +379,7 @@ $"    Public Shared Operator =(FirstRecord As {className}{typeParams}, secondRec
         record.AppendLine()
     End Sub
 
-    Private Shared Sub AddToString(className As String, Properties As List(Of PropertyInfo), record As StringBuilder)
+    Private Shared Sub WriteToString(className As String, Properties As List(Of PropertyInfo), record As StringBuilder)
         record.AppendLine(
 $"    Public Overrides Function ToString() As String
         Return ""{className}"" & "" {{ "" & RecordHelper.GetPropertyValuePairs(Me) & "" }}""
@@ -313,7 +388,7 @@ $"    Public Overrides Function ToString() As String
         record.AppendLine()
     End Sub
 
-    Private Shared Sub AddClone(className As String, typeParams As String, record As StringBuilder)
+    Private Shared Sub WriteClone(className As String, typeParams As String, record As StringBuilder)
         record.AppendLine(
 $"    Public Function Clone() As {className}{typeParams}
         Return Me.With()
@@ -321,7 +396,7 @@ $"    Public Function Clone() As {className}{typeParams}
         record.AppendLine()
     End Sub
 
-    Private Shared Sub AddWithProps(className As String, typeParams As String, Properties As List(Of PropertyInfo), record As StringBuilder)
+    Private Shared Sub WriteWithProps(className As String, typeParams As String, Properties As List(Of PropertyInfo), record As StringBuilder)
         For Each p In Properties
             record.AppendLine($"    Public Function With{p.Name}([{p.camelCaseName}] As {p.Type}) As {className}{typeParams}")
             record.AppendLine($"        Return Me.With([{p.camelCaseName}]:=[{p.camelCaseName}])")
@@ -330,56 +405,79 @@ $"    Public Function Clone() As {className}{typeParams}
         Next
     End Sub
 
-    Private Shared Sub AddWith(className As String, typeParams As String, Properties As List(Of PropertyInfo), record As StringBuilder, params As String)
+    Private Shared Sub WriteWith(className As String, typeParams As String, Properties As List(Of PropertyInfo), record As StringBuilder, params As String)
         record.AppendLine("    Public Function [With](")
         record.Append(params)
         record.AppendLine(vbCrLf & $"            ) As {className}{typeParams}")
         record.AppendLine()
 
         Dim body As New StringBuilder
-        body.AppendLine($"        Dim newRecord As New {className}{typeParams}()")
+        body.AppendLine($"        Return  New {className}{typeParams}(")
+        Dim addSep = False
         For Each p In Properties
-            body.AppendLine(
-$"        If [{p.camelCaseName}].HasValue
-            newRecord._{p.Name} = [{p.camelCaseName}].Value
-        Else
-            newRecord._{p.Name} = Me._{p.Name}
-        End If
-")
+            If addSep Then
+                body.AppendLine(",")
+            Else
+                addSep = True
+            End If
+            body.Append($"            If ([{p.camelCaseName}].HasValue, [{p.camelCaseName}].Value, Me.{p.Name})")
         Next
-        body.AppendLine("        Return  newRecord")
+        body.AppendLine()
+        body.AppendLine("        )")
         record.Append(body.ToString())
         record.AppendLine("    End Function")
         record.AppendLine()
     End Sub
 
-    Private Shared _references As List(Of MetadataReference)
-    Shared ReadOnly Property References As List(Of MetadataReference)
-        Get
-            If _references Is Nothing Then
-                _references = New List(Of MetadataReference)
-                Dim assemblies = AppDomain.CurrentDomain.GetAssemblies()
-                For Each assembly As Reflection.Assembly In assemblies
-                    If Not assembly.IsDynamic Then
-                        _references.Add(MetadataReference.CreateFromFile(assembly.Location))
-                    End If
-                Next
-            End If
+    Private Shared Sub AddInheritedPropertiesInfo(
+                                     inheritance As String,
+                                     properties As List(Of PropertyInfo)
+                         )
 
-            Return _references
-        End Get
-    End Property
+        Dim code = $"
+{importsList}
+Class Test_00000000000000
+   {inheritance}
+End Class
+"
 
-    Shared Sub AddReferences(references As IEnumerable(Of MetadataReference))
-        Dim refs = RecordParser.References
-        For Each ref In references
-            If Not refs.Any(Function(r) r.Display = ref.Display) Then
-                refs.Add(ref)
-            End If
-        Next
+        Dim syntaxTree = SyntaxFactory.ParseSyntaxTree(code)
+        Dim comp = CurrentCompilation.AddSyntaxTrees(syntaxTree)
+        Dim sem = comp.GetSemanticModel(syntaxTree)
+        Dim inhertsStatement = syntaxTree.GetRoot().DescendantNodes().OfType(Of InheritsStatementSyntax)().First
+
+        Try
+            Dim baseClass = sem.GetTypeInfo(inhertsStatement.ChildNodes(0)).Type
+            For Each m In baseClass.GetMembers()
+                Dim prop = TryCast(m, IPropertySymbol)
+                If prop IsNot Nothing AndAlso prop.DeclaredAccessibility = Accessibility.Public Then
+                    Dim attrs = prop.GetAttributes()
+                    Dim defValue = ""
+                    Dim isKey = False
+                    For Each attr In attrs
+                        If attr.AttributeClass.Name = "DefaultValueAttribute" Then
+                            defValue = attr.ConstructorArguments(0).Value.ToString().Replace(StringQuote, """")
+                        ElseIf attr.AttributeClass.Name = "Key" Then
+                            isKey = True
+                        End If
+                    Next
+
+                    properties.Add(New PropertyInfo() With {
+                        .Name = prop.Name,
+                        .Type = prop.Type.ToString(),
+                        .DefaultValue = defValue,
+                        .IsKey = isKey,
+                        .IsReadOnly = prop.IsReadOnly,
+                        .AddOverrides = prop.IsMustOverride OrElse prop.IsOverridable
+                    })
+                End If
+            Next
+        Catch
+        End Try
     End Sub
 
     Private Shared Function InferType(
+                                     inheritance As String,
                                      methods As List(Of String),
                                      properties As List(Of PropertyInfo),
                                      defaultValue As String,
@@ -388,18 +486,19 @@ $"        If [{p.camelCaseName}].HasValue
 
         Dim code = $"
 {importsList}
-Class Test
+Class Test_00000000000001
+   {inheritance}
     Sub Foo
         Dim a {defaultValue}
     End Sub
 
-{AddProperties(properties)}
-{AddMethods(methods)}
+{WriteProperties(properties)}
+{WriteMethods(methods)}
 End Class
 "
 
         Dim syntaxTree = SyntaxFactory.ParseSyntaxTree(code)
-        Dim comp = VisualBasicCompilation.Create("Test", {syntaxTree}, References)
+        Dim comp = CurrentCompilation.AddSyntaxTrees(syntaxTree)
         Dim sem = comp.GetSemanticModel(syntaxTree)
         Dim variableDeclaration = syntaxTree.GetRoot().DescendantNodes().OfType(Of LocalDeclarationStatementSyntax)().First
 
@@ -440,3 +539,5 @@ End Class
     End Function
 
 End Class
+
+

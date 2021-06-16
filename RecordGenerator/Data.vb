@@ -1,5 +1,10 @@
 ﻿Module Data
     Friend DefaultOfStruct As String = <![CDATA[
+Option Explicit on
+Option Strict off
+Option Infer On
+Option Compare Binary
+
 Public Structure DefaultOf
     Public Shared ReadOnly [Byte] As [Optional](Of Byte) = New [Optional](Of Byte)(Nothing)
     Public Shared ReadOnly [SByte] As [Optional](Of SByte) = New [Optional](Of SByte)(Nothing)
@@ -27,6 +32,11 @@ End Structure
 ]]>.Value
 
     Friend DefaultStruct As String = <![CDATA[
+Option Explicit on
+Option Strict off
+Option Infer On
+Option Compare Binary
+
 Public Structure [Default]
     Public Shared ReadOnly [Byte] As [Optional](Of Byte) = New [Optional](Of Byte)(Nothing)
     Public Shared ReadOnly [SByte] As [Optional](Of SByte) = New [Optional](Of SByte)(Nothing)
@@ -54,6 +64,11 @@ End Structure
 ]]>.Value
 
     Friend DefaultOfTStruct As String = <![CDATA[
+Option Explicit on
+Option Strict off
+Option Infer On
+Option Compare Binary
+
 Public Structure [Default](Of T)
     Public Shared Widening Operator CType(value As [Default](Of T)) As [Optional](Of T)
         Return New [Optional](Of T)(Nothing)
@@ -62,6 +77,11 @@ End Structure
 ]]>.Value
 
     Friend OptionalStruct As String = <![CDATA[
+Option Explicit on
+Option Strict off
+Option Infer On
+Option Compare Binary
+
 Public Structure [Optional](Of T)
 
     Private Sub New(value As T, hasValue As Boolean)
@@ -102,6 +122,15 @@ End Structure
 ]]>.Value
 
     Friend HelperClass As String = <![CDATA[
+Option Explicit on
+Option Strict off
+Option Infer On
+Option Compare Binary
+
+Friend Class KeyAttribute
+    Inherits Attribute
+End Class
+
 Public Class RecordHelper
     Public Shared Function GetPropertyValuePairs(obj As Object) As String
         Dim sb As New System.Text.StringBuilder

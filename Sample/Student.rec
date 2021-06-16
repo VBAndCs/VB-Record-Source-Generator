@@ -1,11 +1,22 @@
 ﻿Imports System.Text, System.IO
 Imports System.Collections
 
+Public Class Person(
+	ID = 0, 
+	Name = "", 
+    Address = (City := "", Street := "", No := 0)
+) Inherits Test
+
 <Record>
 Public Class Student(
-	ID = 0, 
-	Name = "",
+    Name As String,
+    ClassRoom = 0,
 	Grades As double, 
-	Address = (City := "", Street := "", No := 0),
-    GetString = Function() "Name" & Grades
-)
+    Print = Function() Name & Grades
+) Inherits Person
+
+Public Class UniStudent(
+    University As String,
+    Collage As String,
+    Print = Function() $"{Name}, {University}, {Collage}"
+) Inherits Student
