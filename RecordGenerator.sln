@@ -7,7 +7,7 @@ Project("{778DAE3C-4631-46EA-AA77-85C1314464D9}") = "RecordGenerator", "RecordGe
 EndProject
 Project("{778DAE3C-4631-46EA-AA77-85C1314464D9}") = "Sample", "Sample\Sample.vbproj", "{0FA7148D-9FE1-450D-B69E-3DB0F5D5DE32}"
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "RecordGenerator.Tests", "RecordGeneratorTests\RecordGenerator.Tests.vbproj", "{B36F5EAD-7B41-46D8-A379-18BB2052AD9C}"
+Project("{778DAE3C-4631-46EA-AA77-85C1314464D9}") = "RecordGenerator.Tests", "RecordGeneratorTests\RecordGenerator.Tests.vbproj", "{B36F5EAD-7B41-46D8-A379-18BB2052AD9C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,8 +15,8 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{E1FA5F0F-1290-4730-87AB-ABB9AABBD6DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E1FA5F0F-1290-4730-87AB-ABB9AABBD6DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E1FA5F0F-1290-4730-87AB-ABB9AABBD6DB}.Debug|Any CPU.ActiveCfg = Release|Any CPU
+		{E1FA5F0F-1290-4730-87AB-ABB9AABBD6DB}.Debug|Any CPU.Build.0 = Release|Any CPU
 		{E1FA5F0F-1290-4730-87AB-ABB9AABBD6DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E1FA5F0F-1290-4730-87AB-ABB9AABBD6DB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0FA7148D-9FE1-450D-B69E-3DB0F5D5DE32}.Debug|Any CPU.ActiveCfg = Debug|Any CPU

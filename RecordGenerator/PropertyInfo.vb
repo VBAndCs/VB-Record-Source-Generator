@@ -18,4 +18,5 @@
     Public camelCaseName As String
     Public Type As String
     Public DefaultValue As String
+    Friend LiteralDefVal As Boolean
 End Structure

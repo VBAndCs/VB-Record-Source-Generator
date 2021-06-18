@@ -8,19 +8,18 @@ Imports Microsoft.CodeAnalysis.VisualBasic
 Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
 
 Public Class RecordParser
-    Public Shared CurrentCompilation As Compilation = Nothing
     Private Const StringQuote As String = "__QUOTE__"
+    Public Shared CurrentCompilation As Compilation = Nothing
+    Public Shared importsList As New StringBuilder()
 
     Public Shared Sub Debug(code As String)
         CurrentCompilation = VisualBasicCompilation.Create("Debug")
         Generate(Nothing, code)
     End Sub
 
-    Public Shared importsList As New StringBuilder()
 
     Public Shared Sub Generate(context? As GeneratorExecutionContext, code As String)
         importsList.Clear()
-
         For Each node In SyntaxFactory.ParseSyntaxTree(code).GetRoot.ChildNodes
             If node.Kind <> SyntaxKind.ImportsStatement Then
                 code = code.Substring(node.SpanStart)
@@ -49,11 +48,6 @@ Public Class RecordParser
                 End If
                 Dim definition = code.Substring(0, token.SpanStart)
                 Dim members = SyntaxFactory.ParseParameterList(code.Substring(token.SpanStart))
-
-                'GenerateRecord(context, definition, members)
-                'Dim pos = token.SpanStart + members.Span.Length
-                'If pos < code.Length Then Parse(context, code.Substring(pos))
-                'Exit For
 
                 Dim pos = token.SpanStart + members.Span.Length
                 If pos >= code.Length Then Return
@@ -106,6 +100,7 @@ Public Class RecordParser
         Dim Methods As New List(Of String)
 
         If inheritance <> "" Then AddInheritedPropertiesInfo(inheritance, Properties)
+        Dim basePropCount = Properties.Count
 
         For Each member As ParameterSyntax In paramList.ChildNodes
             Dim valueExpr = member.Default?.DescendantNodes?(0)
@@ -113,7 +108,7 @@ Public Class RecordParser
             If TypeOf valueExpr Is LambdaExpressionSyntax Then
                 LambdaToMethod(inheritance, Methods, Properties, member, valueExpr)
             Else
-                AddPropertyInfo(inheritance, Methods, Properties, DefaultPropInfo, member)
+                AddPropertyInfo(inheritance, Methods, Properties, basePropCount, DefaultPropInfo, member)
             End If
         Next
 
@@ -140,9 +135,9 @@ Option Compare Binary
         record.AppendLine("    " & inheritance)
         record.AppendLine()
         record.AppendLine(WriteProperties(Properties))
-        Dim params = WriteConstructor(Properties, record)
+        WriteConstructor(Properties, record)
         record.AppendLine(WriteMethods(Methods))
-        WriteWith(className, typeParams, Properties, record, params)
+        WriteWith(className, typeParams, Properties, record)
         WriteWithProps(className, typeParams, Properties, record)
         WriteClone(className, typeParams, record)
         WriteToString(className, Properties, record)
@@ -175,8 +170,7 @@ Option Compare Binary
         Dim isSub = MethodType.ToLower() = "sub"
         Dim AsClause = ""
         If Not isSub Then
-            AsClause = Header.AsClause?.ToString()
-            If AsClause <> "" Then InferType(inheritance, methods, properties, param.Default.ToString(), True)
+            AsClause = If(Header.AsClause?.ToString(), InferType(inheritance, methods, properties, param.Default.ToString()).Type)
         End If
         Dim lambdaBody As String = ""
         If TypeOf lanbdaExpr Is SingleLineLambdaExpressionSyntax Then
@@ -198,6 +192,7 @@ $"    Public {MethodType} { param.Identifier}{Header.ParameterList} {AsClause}
                                       inheritance As String,
                                       methods As List(Of String),
                                       properties As List(Of PropertyInfo),
+                                      basePropCount As Integer,
                                       DefaultPropInfo As PropertyInfo,
                                       param As ParameterSyntax
                                   )
@@ -208,13 +203,19 @@ $"    Public {MethodType} { param.Identifier}{Header.ParameterList} {AsClause}
 
         prop.Name = param.Identifier.ToString()
         If inheritance <> "" Then
-            For i = 0 To properties.Count - 1
+            For i = 0 To basePropCount - 1
                 Dim baseProp = properties(i)
                 If baseProp.Name.ToLower() = prop.Name.ToLower() Then
                     prop.IsReadOnly = baseProp.IsReadOnly
                     prop.IsKey = baseProp.IsKey Or prop.IsKey Or DefaultPropInfo.IsKey
                     prop.Type = baseProp.Type
-                    prop.DefaultValue = If(param.Default?.ToString(), baseProp.DefaultValue)
+                    If param.Default Is Nothing Then
+                        prop.DefaultValue = baseProp.DefaultValue
+                        prop.LiteralDefVal = baseProp.LiteralDefVal
+                    Else
+                        prop.DefaultValue = param.Default.ToString()
+                        prop.LiteralDefVal = TypeOf param.Default.DescendantNodes?(0) Is LiteralExpressionSyntax
+                    End If
                     prop.InheritanceModifier = If(baseProp.AddOverrides, "Overrides", "Shadows")
                     properties(i) = prop
                     Exit Sub
@@ -227,10 +228,39 @@ $"    Public {MethodType} { param.Identifier}{Header.ParameterList} {AsClause}
 
         prop.Type = param.AsClause?.ToString()
         prop.DefaultValue = param.Default?.ToString()
-        If prop.Type = "" Then
-            prop.Type = If(prop.DefaultValue = "", "As Object", InferType(inheritance, methods, properties, prop.DefaultValue))
+
+        If prop.DefaultValue = "" Then
+            If prop.Type = "" Then
+                prop.Type = "As Object"
+            Else
+                Select Case prop.Type.Substring(2).Trim(" "c, "?"c).ToLower()
+                    Case "byte", "sbyte", "short", "ushort", "integer", "uinteger", "long", "ulong", "single", "double", "decimal"
+                        prop.LiteralDefVal = True
+                        prop.DefaultValue = "= 0"
+                    Case "boolean"
+                        prop.LiteralDefVal = True
+                        prop.DefaultValue = "= False"
+                    Case "char"
+                        prop.LiteralDefVal = True
+                        prop.DefaultValue = "= vbNullChar"
+                    Case "string"
+                        prop.LiteralDefVal = True
+                        prop.DefaultValue = "= """""
+                    Case "date", "datetime"
+                        prop.LiteralDefVal = True
+                        prop.DefaultValue = "= #1/1/0001#"
+                End Select
+            End If
+        Else
+            prop.LiteralDefVal = TypeOf param.Default.DescendantNodes?(0) Is LiteralExpressionSyntax
+            If prop.Type = "" OrElse Not prop.LiteralDefVal Then
+                Dim result = InferType(inheritance, methods, properties, "= Function() " & prop.DefaultValue.Substring(1))
+                prop.LiteralDefVal = prop.LiteralDefVal OrElse result.IsConst
+                If prop.Type = "" Then prop.Type = result.Type
+            End If
         End If
-        prop.Type = prop.Type.Substring(2).Trim
+
+            prop.Type = prop.Type.Substring(2).Trim()
         properties.Add(prop)
     End Sub
 
@@ -238,12 +268,10 @@ $"    Public {MethodType} { param.Identifier}{Header.ParameterList} {AsClause}
     Private Shared Function WriteProperties(Properties As List(Of PropertyInfo)) As String
         Dim props As New StringBuilder
         For Each p In Properties
-            If p.IsKey Then
-                props.AppendLine("   <Key>")
-            End If
+            If p.IsKey Then props.AppendLine("   <Key>")
 
             If p.DefaultValue <> "" Then
-                props.AppendLine($"   <DefaultValue(""{ p.DefaultValue.Replace("""", StringQuote)}"")>")
+                props.AppendLine($"   <DefaultValue(""{If(p.LiteralDefVal, "1", "0")}{ p.DefaultValue.Replace("""", StringQuote)}"")>")
             End If
 
             props.Append("   Public ")
@@ -256,7 +284,7 @@ $"    Public {MethodType} { param.Identifier}{Header.ParameterList} {AsClause}
         Return props.ToString()
     End Function
 
-    Private Shared Function WriteConstructor(Properties As List(Of PropertyInfo), record As StringBuilder) As String
+    Private Shared Sub WriteConstructor(Properties As List(Of PropertyInfo), record As StringBuilder)
         Dim params As New StringBuilder
         Dim body As New StringBuilder
         Dim addSep = False
@@ -265,19 +293,25 @@ $"    Public {MethodType} { param.Identifier}{Header.ParameterList} {AsClause}
 
         For Each p In Properties
             If addSep Then
-                params.Append("," & vbCrLf & "")
+                params.Append("," & vbCrLf)
             Else
                 addSep = True
             End If
 
-            params.Append($"                Optional [{p.camelCaseName}] As [Optional](Of {p.Type}) = Nothing")
-            body.AppendLine(
+            If p.LiteralDefVal Then
+                params.Append($"                Optional [{p.camelCaseName}] As {p.Type} {p.DefaultValue}")
+                body.AppendLine($"        Me.{p.Name} = [{p.camelCaseName}]")
+            Else
+                params.Append($"                Optional [{p.camelCaseName}] As [Optional](Of {p.Type}) = Nothing")
+                body.AppendLine(
 $"        If [{p.camelCaseName}].HasValue
             Me.{p.Name} = [{p.camelCaseName}].Value
         Else
             Me.{p.Name} {If(p.DefaultValue = "", "= Nothing", p.DefaultValue)}
         End If
 ")
+
+            End If
         Next
         record.Append(params.ToString())
         record.AppendLine(vbCrLf & "            )")
@@ -285,8 +319,7 @@ $"        If [{p.camelCaseName}].HasValue
         record.Append(body.ToString())
         record.AppendLine("    End Sub")
         record.AppendLine()
-        Return params.ToString
-    End Function
+    End Sub
 
     Private Shared Function WriteMethods(Methods As List(Of String)) As String
         Dim sb As New StringBuilder
@@ -407,26 +440,37 @@ $"    Public Function Clone() As {className}{typeParams}
         Next
     End Sub
 
-    Private Shared Sub WriteWith(className As String, typeParams As String, Properties As List(Of PropertyInfo), record As StringBuilder, params As String)
+    Private Shared Sub WriteWith(className As String, typeParams As String, Properties As List(Of PropertyInfo), record As StringBuilder)
+        Dim params As New StringBuilder
+        Dim body As New StringBuilder
+        Dim addSep = False
+
+        For Each p In Properties
+            If addSep Then
+                params.Append("," & vbCrLf)
+                body.Append("," & vbCrLf)
+            Else
+                addSep = True
+            End If
+
+            If p.LiteralDefVal AndAlso p.Type.ToLower() <> "string" Then
+                Dim type = p.Type & If(p.Type.EndsWith("?"), "", "?")
+                params.Append($"                Optional [{p.camelCaseName}] As {type} = Nothing")
+            Else
+                params.Append($"                Optional [{p.camelCaseName}] As [Optional](Of {p.Type}) = Nothing")
+            End If
+
+            body.Append($"            If ([{p.camelCaseName}].HasValue, [{p.camelCaseName}].Value, Me.{p.Name})")
+        Next
+
         record.AppendLine("    Public Function [With](")
         record.Append(params)
         record.AppendLine(vbCrLf & $"            ) As {className}{typeParams}")
         record.AppendLine()
 
-        Dim body As New StringBuilder
-        body.AppendLine($"        Return  New {className}{typeParams}(")
-        Dim addSep = False
-        For Each p In Properties
-            If addSep Then
-                body.AppendLine(",")
-            Else
-                addSep = True
-            End If
-            body.Append($"            If ([{p.camelCaseName}].HasValue, [{p.camelCaseName}].Value, Me.{p.Name})")
-        Next
-        body.AppendLine()
-        body.AppendLine("        )")
-        record.Append(body.ToString())
+        record.AppendLine($"        Return  New {className}{typeParams}(")
+        record.AppendLine(body.ToString())
+        record.AppendLine("        )")
         record.AppendLine("    End Function")
         record.AppendLine()
     End Sub
@@ -467,7 +511,8 @@ End Class
                     properties.Add(New PropertyInfo() With {
                         .Name = prop.Name,
                         .Type = prop.Type.ToString(),
-                        .DefaultValue = defValue,
+                        .LiteralDefVal = If(defValue = "", False, defValue(0) = "1"c),
+                        .DefaultValue = If(defValue = "", "", defValue.Substring(1)),
                         .IsKey = isKey,
                         .IsReadOnly = prop.IsReadOnly,
                         .AddOverrides = prop.IsMustOverride OrElse prop.IsOverridable
@@ -482,9 +527,8 @@ End Class
                                      inheritance As String,
                                      methods As List(Of String),
                                      properties As List(Of PropertyInfo),
-                                     defaultValue As String,
-                                     Optional isLambda As Boolean = False
-                         ) As String
+                                     defaultValue As String
+                         ) As (IsConst As Boolean, Type As String)
 
         Dim code = $"
 {importsList}
@@ -504,21 +548,23 @@ End Class
         Dim sem = comp.GetSemanticModel(syntaxTree)
         Dim variableDeclaration = syntaxTree.GetRoot().DescendantNodes().OfType(Of LocalDeclarationStatementSyntax)().First
 
+        Dim isConst = False
         Try
-            If isLambda Then
-                Dim typeSymbol = CType(CType(sem.GetDeclaredSymbol(variableDeclaration.ChildNodes(0).ChildNodes(0)), ILocalSymbol).Type, INamedTypeSymbol).DelegateInvokeMethod.ReturnType
-                If typeSymbol Is Nothing Then Return "As Object"
-                Dim typeName = typeSymbol.ToDisplayString()
-                Return "As " & If(typeName = "?" OrElse typeName.StartsWith("<anonymous type: "), "Object", typeName)
-            Else
-                Dim typeSymbol = sem.GetOperation(variableDeclaration.Declarators(0).Initializer.Value).Type
-                Dim typeName = typeSymbol.ToDisplayString()
-                Return "As " & If(typeName = "?" OrElse typeName.StartsWith("<anonymous type: "), "Object", typeName)
-            End If
+            Dim valueSymbol = sem.GetSymbolInfo(CType(variableDeclaration.Declarators(0).Initializer.Value, SingleLineLambdaExpressionSyntax).Body).Symbol
+            isConst = valueSymbol IsNot Nothing AndAlso (TryCast(valueSymbol, IFieldSymbol)?.IsConst OrElse TryCast(valueSymbol, ILocalSymbol)?.IsConst)
+        Catch
+
+        End Try
+
+        Try
+            Dim typeSymbol = CType(CType(sem.GetDeclaredSymbol(variableDeclaration.ChildNodes(0).ChildNodes(0)), ILocalSymbol).Type, INamedTypeSymbol).DelegateInvokeMethod.ReturnType
+            If typeSymbol Is Nothing Then Return (isConst, "As Object")
+            Dim typeName = typeSymbol.ToDisplayString()
+            Return (isConst, "As " & If(typeName = "?" OrElse typeName.StartsWith("<anonymous type: "), "Object", typeName))
         Catch
         End Try
 
-        Return "As Object"
+        Return (isConst, "As Object")
 
     End Function
 

@@ -17,17 +17,52 @@ Namespace RecordGeneratorTests
         <TestMethod>
         Public Sub Execute()
             Dim rec As String = <![CDATA[
+Imports System.Text, System.IO
+Imports System.Collections
+
+
+Public Class TestEnums(
+    State = TriState.False,
+    List = new List(Of Integer),
+    Value = MyValue
+ )
+
+Public Class Person(
+	ID = 0, 
+	Name = "", 
+    Address = (City := "", Street := "", No := 0)
+) Inherits Test
+
+<Record>
 Public Class Student(
     Name As String,
     ClassRoom = 0,
 	Grades As double, 
-    Print = Function() As String
+    Print = Function()
                      return Name & Grades
                 End Function
-)
+) Inherits Person
+
+Public Class UniStudent(
+    University As String,
+    Collage As String,
+    Print = Function() $"{Name}, {University}, {Collage}"
+) Inherits Student
+   
 ]]>.Value
 
-            Dim result = GetGeneratedOutput(rec)
+            Dim source As String = <![CDATA[
+Module Program
+    Public Const MyValue As Integer = 1
+End Module
+
+Public Class Test
+    Public Property [Date] As Date
+End Class
+]]>.Value
+
+
+            Dim result = GetGeneratedOutput(source, rec)
             Stop
 
             If result.Diagnostics.Length > 0 Then
@@ -43,7 +78,7 @@ Public Class Student(
 
         End Sub
 
-        Private Function GetGeneratedOutput(source As String) As (Diagnostics As ImmutableArray(Of Diagnostic), Output As String)
+        Private Function GetGeneratedOutput(source As String, additionalFile As String) As (Diagnostics As ImmutableArray(Of Diagnostic), Output As String)
 
             Dim syntaxTree = VisualBasicSyntaxTree.ParseText(source)
 
@@ -55,6 +90,8 @@ Public Class Student(
                 End If
             Next
 
+
+
             Dim compilation = VisualBasicCompilation.Create("Foo", New SyntaxTree() {syntaxTree}, references, New VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
 
             Dim generator1 As ISourceGenerator = New RecordGenerator.RecordGenerator()
@@ -62,7 +99,7 @@ Public Class Student(
             Dim iaGenerator = {generator1}.ToImmutableArray
 
             Dim driver = VisualBasicGeneratorDriver.Create(iaGenerator,
-                                                       {CType(New MyAdditionalText("test.rec", source), AdditionalText)}.ToImmutableArray,
+                                                       {CType(New MyAdditionalText("JustFotTest.rec", additionalFile), AdditionalText)}.ToImmutableArray,
                                                        Nothing,
                                                        Nothing)
 

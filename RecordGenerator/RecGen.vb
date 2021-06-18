@@ -22,16 +22,12 @@ Public Class RecordGenerator
 
             If Not recFiles.Any Then Return
 
-            context.AddSource(NameOf(DefaultOfStruct), SourceText.From(DefaultOfStruct, Encoding.UTF8))
-            context.AddSource(NameOf(DefaultOfTStruct), SourceText.From(DefaultOfTStruct, Encoding.UTF8))
-            context.AddSource(NameOf(DefaultStruct), SourceText.From(DefaultStruct, Encoding.UTF8))
+            Dim Namespaces = context.Compilation
+
             context.AddSource(NameOf(OptionalStruct), SourceText.From(OptionalStruct, Encoding.UTF8))
             context.AddSource(NameOf(HelperClass), SourceText.From(HelperClass, Encoding.UTF8))
 
             RecordParser.CurrentCompilation = context.Compilation.AddSyntaxTrees(
-                    SyntaxFactory.ParseSyntaxTree(DefaultOfStruct),
-                    SyntaxFactory.ParseSyntaxTree(DefaultOfTStruct),
-                    SyntaxFactory.ParseSyntaxTree(DefaultStruct),
                     SyntaxFactory.ParseSyntaxTree(OptionalStruct),
                     SyntaxFactory.ParseSyntaxTree(HelperClass)
             )

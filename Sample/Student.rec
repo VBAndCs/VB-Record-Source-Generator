@@ -1,6 +1,13 @@
 ﻿Imports System.Text, System.IO
 Imports System.Collections
 
+
+Public Class TestEnums(
+    State = TriState.False,
+    List = new List(Of Integer),
+    Value = MyValue
+ )
+
 Public Class Person(
 	ID = 0, 
 	Name = "", 
@@ -12,7 +19,7 @@ Public Class Student(
     Name As String,
     ClassRoom = 0,
 	Grades As double, 
-    Print = Function() As String
+    Print = Function()
                      return Name & Grades
                 End Function
 ) Inherits Person

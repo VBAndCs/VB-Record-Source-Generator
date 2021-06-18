@@ -1,8 +1,13 @@
 Module Program
 
+    
+
+    Public Const MyValue As Integer = 1
+
+
     Sub Main(args As String())
 
-        Dim Adam As New Student(Now, 1, "Adam",  ("New Yourk", "Hello St.", 10), 3, 80.5)
+        Dim Adam As New Student(Now, 1, "Adam", ("New Yourk", "Hello St.", 10), 3, 80.5)
         Console.WriteLine(Adam)
 
         Dim John = Adam.With(ID:=2, Name:="John")
@@ -27,16 +32,3 @@ End Module
 Public Class Test
     Public Property [Date] As Date
 End Class
-
-{
-
-Class Test_00000000000001
-
-    Sub Foo()
-        Dim a = 0
-    End Sub
-
-    Public Property [Name] As String
-
-End Class
-}
