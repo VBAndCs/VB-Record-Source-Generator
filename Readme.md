@@ -25,11 +25,11 @@ Public Class Person(
 ```
 
 This is a C#-like Person record class, that has three properties (ID, Name and Address). You can use an As clause to define the property type, or you can just give it an initial value, and the generator will infer the type from it. And of course you can do both.
-You can also define methods in the record and it will be converted to a full body Sub or Function. Look at this:
+You can also define methods in the record and it will be converted to full body Subs or Functions. Look at this:
 ```VB.NET
 Public Class Student(
     <ReadOnly>ClassRoom = 0,
-    <Key>;University As String,
+    <Key>University As String,
     <ReadOnlyKey>Collage As String,
     Grades As double, 
     Print = Function() Name & Grades
@@ -87,3 +87,5 @@ In fact you don't have to worry about all these details, because it is used inte
 Where T is the type of the property.
 Note that this is not needed with value types, as I use the Nullable structure instead. It is needed only with value-type params of the `With` methods, so I can set it's default vakue to Nothing (an actual nothing that will be restored in the nullable sturcture), as an indication of that param is missing, so I copy the value of the property from the current record (Me), to the new returned record.
 
+# To Do:
+It will be helpful if .rec files have intellisense support, formatting, coloring, and syntax errors check.

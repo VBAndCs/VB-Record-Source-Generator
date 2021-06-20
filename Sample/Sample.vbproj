@@ -6,9 +6,16 @@
     <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="Author.rec" />
+    <None Remove="TestEnums.rec" />
+  </ItemGroup>
+
 
   <ItemGroup>
     <ProjectReference Include="..\RecordGenerator\RecordGenerator.vbproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <AdditionalFiles Include="Author.rec" />
+    <AdditionalFiles Include="TestEnums.rec" />
     <AdditionalFiles Include="Student.rec" />
   </ItemGroup>
 </Project>

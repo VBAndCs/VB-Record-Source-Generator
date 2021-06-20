@@ -11,35 +11,41 @@
   <PropertyGroup>
     <PackageId>Visual-Basic-Record-Generator</PackageId>
     <Title>VB.NET Record Source Generator</Title>
-    <PackageVersion>1.0.1.0</PackageVersion>
+    <PackageVersion>1.1.0.0</PackageVersion>
     <Authors>Mohammad Hamdy Ghanem</Authors>
     <PackageProjectUrl>https://github.com/VBAndCs/VB-Record-Source-Generator</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <Summary>A VB.NET source generator</Summary>
-    <Description>
-      Source generators is a new feature added to VB.NET since VS.NET version 16.9. It allows you to write code to generate code that is added to your source code in compilation time. You can combine this feature with the Roslyn compiler powerful tools like SyntaxFacyoty, SyntaxTree and SemanticModel to parse, compile and analyze VB syntax and generate any additional code based on that. As an application of these concept, I made a syntax for VB Records, which consists of a Class/Structure declaration followed by a parameter list, followed by an optional Inherits statement. You can also add Imports statements at top of the file. These 4 parts are all VB valid syntax parts, but I grouped them in a new way to form the record syntax. See documentation for more information about the record syntax.
-      See the readme for more info about how to use the Record Generator and the record syntax.
+    <Description>Source generators is a new feature added to VB.NET since VS.NET version 16.9. It allows you to write code to generate code that is added to your source code in compilation time. You can combine this feature with the Roslyn compiler powerful tools like SyntaxFacyoty, SyntaxTree and SemanticModel to parse, compile and analyze VB syntax and generate any additional code based on that. As an application of these concept, I made a syntax for VB Records, which consists of a Class/Structure declaration followed by a parameter list, followed by an optional Inherits statement. You can also add Imports statements at top of the file. These 4 parts are all VB valid syntax parts, but I grouped them in a new way to form the record syntax. See documentation for more information about the record syntax.
+See the readme for more info about how to use the Record Generator and the record syntax.
       
-    </Description>
-    <PackageReleaseNotes>Supports writing methods as lampda expressions, supports Inheritance, and supports type inference for properties with default Values.</PackageReleaseNotes>
+</Description>
+    <PackageReleaseNotes># Ver 1.1:
+- Sipports using Record key word instead of &lt;Record&gt; Class.
+- Supprts using Ky, ReadOnly (Or Immutable) and ReadOnly Key (Or Immutable Key)  as keywords instead of Attrs.
+- Supports using ?, (), and type chars after the property name.
+- Inhanced ToString method to show nested records, and list elements. 
+
+# Ver1.0: 
+- Supports writing methods as lampda expressions.
+- Supports Inheritance.
+- Supports type inference for properties with default Values.</PackageReleaseNotes>
     <PackageTags>VB.NET, Records, Source Generators</PackageTags>
     <NoPackageAnalysis>true</NoPackageAnalysis>
+    <Version>1.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="3.9.0-2.final" PrivateAssets="all"/>
-    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.2" PrivateAssets="all"/>
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="3.9.0-2.final" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.2" PrivateAssets="all" />
     <PackageReference Update="NETStandard.Library" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="tools\*.ps1" CopyToOutputDirectory="Always" Pack="true" PackagePath="tools" />
-    <None Include="$(OutputPath)\$(AssemblyName).dll"
-          Pack="true" PackagePath="analyzers/dotnet/vb" Visible="false" />
-    <None Include="$(OutputPath)\$(AssemblyName).deps.json"
-          Pack="true" PackagePath="analyzers/dotnet/vb" Visible="false" />
-    <None Include="$(OutputPath)\$(AssemblyName).pdb"
-          Pack="true" PackagePath="analyzers/dotnet/vb" Visible="false" />
+    <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/vb" Visible="false" />
+    <None Include="$(OutputPath)\$(AssemblyName).deps.json" Pack="true" PackagePath="analyzers/dotnet/vb" Visible="false" />
+    <None Include="$(OutputPath)\$(AssemblyName).pdb" Pack="true" PackagePath="analyzers/dotnet/vb" Visible="false" />
   </ItemGroup>
 
 

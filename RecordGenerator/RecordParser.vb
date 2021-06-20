@@ -11,6 +11,15 @@ Public Class RecordParser
     Private Const StringQuote As String = "__QUOTE__"
     Public Shared CurrentCompilation As Compilation = Nothing
     Public Shared importsList As New StringBuilder()
+    Private Shared TypeChars As New Dictionary(Of Char, String) From {
+        {"%"c, "As Integer"},
+        {"&"c, "As Long"},
+        {"@"c, "As Decimal"},
+        {"!"c, "As Single"},
+        {"#"c, "As Double"},
+        {"$"c, "As String"}
+    }
+
 
     Public Shared Sub Debug(code As String)
         CurrentCompilation = VisualBasicCompilation.Create("Debug")
@@ -31,8 +40,55 @@ Public Class RecordParser
             Next
         Next
 
-        Parse(context, code)
+        Parse(context, Lower(code, False))
     End Sub
+
+    Private Shared Function Lower(code As String, isClassHeader As Boolean) As String
+        Dim sb As New StringBuilder(code)
+        Dim tokens = SyntaxFactory.ParseTokens(code).ToArray
+        Dim Token = ""
+        Dim PrevToken = tokens(tokens.Length - 1).Text.ToLower()
+
+        For i = tokens.Length - 1 To 0 Step -1
+            Token = PrevToken
+            PrevToken = If(i = 0, "", tokens(i - 1).Text.ToLower())
+
+            Select Case Token
+                Case "key"
+                    Dim B4PrevToken = If(i < 2, "", tokens(i - 2).Text).ToLower()
+                    If (PrevToken = "readonly" OrElse PrevToken = "immitable") AndAlso B4PrevToken <> "[" AndAlso B4PrevToken <> "<" Then
+                        Dim st = If(i = 0, 0, tokens(i - 1).SpanStart)
+                        sb.Remove(st, tokens(i).Span.End - st + 1)
+                        sb.Insert(st, "<ReadOnlyKey>")
+                        ' Skip ReadOnly
+                        i -= 1
+                        PrevToken = B4PrevToken
+                    ElseIf PrevToken <> "[" Then
+                        Dim st = tokens(i).SpanStart
+                        sb.Remove(st, tokens(i).Span.End - st + 1)
+                        sb.Insert(st, "<Key>")
+                    End If
+
+                Case "readonly", "immitable"
+                    If PrevToken <> "[" AndAlso PrevToken <> "<" Then
+                        Dim st = tokens(i).SpanStart
+                        sb.Remove(st, tokens(i).Span.End - st + 1)
+                        sb.Insert(st, "<ReadOnly>")
+                    End If
+
+                Case "record"
+                    If isClassHeader AndAlso PrevToken <> "[" AndAlso PrevToken <> "<" Then
+                        Dim st = tokens(i).SpanStart
+                        sb.Remove(st, tokens(i).Span.End - st + 1)
+                        sb.Insert(st, "Class ")
+                        sb.Insert(0, "<Record>")
+                        Exit For
+                    End If
+            End Select
+        Next
+
+        Return sb.ToString()
+    End Function
 
     Public Shared Sub Parse(context? As GeneratorExecutionContext, code As String)
 
@@ -46,17 +102,21 @@ Public Class RecordParser
                         If token.Text = "(" Then Exit For
                     Next
                 End If
-                Dim definition = code.Substring(0, token.SpanStart)
+
+                Dim definition = Lower(code.Substring(0, token.SpanStart).TrimStart(ChrW(10), ChrW(13)), True)
                 Dim members = SyntaxFactory.ParseParameterList(code.Substring(token.SpanStart))
 
                 Dim pos = token.SpanStart + members.Span.Length
-                If pos >= code.Length Then Return
-                Dim nextNode = SyntaxFactory.ParseSyntaxTree(code.Substring(pos)).GetRoot().ChildNodes(0)
                 Dim inheritance = ""
-                If nextNode?.Kind = SyntaxKind.InheritsStatement Then
-                    inheritance = nextNode.ToString()
-                    pos += nextNode.Span.Length + 1
+
+                If pos <code.Length Then
+                    Dim nextNode = SyntaxFactory.ParseSyntaxTree(code.Substring(pos)).GetRoot().ChildNodes(0)
+                    If nextNode?.Kind = SyntaxKind.InheritsStatement Then
+                        inheritance = nextNode.ToString()
+                        pos += nextNode.Span.Length + 1
+                    End If
                 End If
+
                 GenerateRecord(context, inheritance, definition, members)
                 If pos < code.Length Then Parse(context, code.Substring(pos))
                 Return
@@ -86,7 +146,8 @@ Public Class RecordParser
 
 
         If Not result.Any Then
-            Throw New Exception("Record must have a name")
+            context.Value.AddSource("Error", SourceText.From("' Record must have a name" & vbCrLf & "'" & definition, Encoding.UTF8))
+            Return
         End If
 
         Dim className = result.First.ToString()
@@ -99,7 +160,7 @@ Public Class RecordParser
         Dim Properties As New List(Of PropertyInfo)
         Dim Methods As New List(Of String)
 
-        If inheritance <> "" Then AddInheritedPropertiesInfo(inheritance, Properties)
+        If inheritance <> "" Then AddInheritedPropertiesInfo(inheritance, Properties, DefaultPropInfo)
         Dim basePropCount = Properties.Count
 
         For Each member As ParameterSyntax In paramList.ChildNodes
@@ -151,9 +212,6 @@ Option Compare Binary
             context.Value.AddSource(className & "Record", SourceText.From(rec, Encoding.UTF8))
             Dim syntx = SyntaxFactory.ParseSyntaxTree(rec)
             CurrentCompilation = CurrentCompilation.AddSyntaxTrees(syntx)
-            'Dim variableDeclaration = SyntaxTree.GetRoot().DescendantNodes().OfType(Of LocalDeclarationStatementSyntax)().First
-            'Dim t = CurrentCompilation.GetSemanticModel(syntx).GetTypeInfo()
-
         End If
 
     End Sub
@@ -201,13 +259,41 @@ $"    Public {MethodType} { param.Identifier}{Header.ParameterList} {AsClause}
         Dim prop As PropertyInfo = Nothing
         If AccessAttr.Count > 0 Then prop = GetPropertyInfo(AccessAttr(0))
 
-        prop.Name = param.Identifier.ToString()
+        Dim belongsToType = ""
+        Dim id = param.Identifier
+        prop.Name = id.Identifier.Text
+
+        ' Handel type chars
+        Dim n = prop.Name.Length - 1
+        Dim c = prop.Name(n)
+        Dim typeOfChar As String = ""
+        If TypeChars.ContainsKey(c) Then
+            prop.Name = prop.Name.Substring(0, n)
+            typeOfChar = TypeChars(c)
+        End If
+
+        ' I allow ti use multiple symbols after the identifier
+        If id.Nullable.Text = "?" Then
+            belongsToType = "?"
+        End If
+
+        If id.ArrayBounds IsNot Nothing Then
+            belongsToType &= "()"
+        End If
+
+        If id.ArrayRankSpecifiers.Count > 0 Then
+            For Each rank In id.ArrayRankSpecifiers
+                belongsToType &= rank.ToString
+            Next
+        End If
+
+
         If inheritance <> "" Then
             For i = 0 To basePropCount - 1
                 Dim baseProp = properties(i)
                 If baseProp.Name.ToLower() = prop.Name.ToLower() Then
-                    prop.IsReadOnly = baseProp.IsReadOnly
-                    prop.IsKey = baseProp.IsKey Or prop.IsKey Or DefaultPropInfo.IsKey
+                    prop.IsReadOnly = baseProp.IsReadOnly Or prop.IsReadOnly
+                    prop.IsKey = baseProp.IsKey Or prop.IsKey
                     prop.Type = baseProp.Type
                     If param.Default Is Nothing Then
                         prop.DefaultValue = baseProp.DefaultValue
@@ -216,7 +302,9 @@ $"    Public {MethodType} { param.Identifier}{Header.ParameterList} {AsClause}
                         prop.DefaultValue = param.Default.ToString()
                         prop.LiteralDefVal = TypeOf param.Default.DescendantNodes?(0) Is LiteralExpressionSyntax
                     End If
-                    prop.InheritanceModifier = If(baseProp.AddOverrides, "Overrides", "Shadows")
+
+                    If prop.DefaultValue = "" Then SetDefValue(prop)
+                    prop.InheritanceModifier = baseProp.InheritanceModifier
                     properties(i) = prop
                     Exit Sub
                 End If
@@ -226,30 +314,17 @@ $"    Public {MethodType} { param.Identifier}{Header.ParameterList} {AsClause}
         prop.IsReadOnly = prop.IsReadOnly Or DefaultPropInfo.IsReadOnly
         prop.IsKey = prop.IsKey Or DefaultPropInfo.IsKey
 
-        prop.Type = param.AsClause?.ToString()
+        prop.Type = If(param.AsClause?.ToString(), typeOfChar)
+
+        If belongsToType <> "" AndAlso Not prop.Type.EndsWith(belongsToType) Then prop.Type = prop.Type & belongsToType
+
         prop.DefaultValue = param.Default?.ToString()
 
         If prop.DefaultValue = "" Then
             If prop.Type = "" Then
                 prop.Type = "As Object"
             Else
-                Select Case prop.Type.Substring(2).Trim(" "c, "?"c).ToLower()
-                    Case "byte", "sbyte", "short", "ushort", "integer", "uinteger", "long", "ulong", "single", "double", "decimal"
-                        prop.LiteralDefVal = True
-                        prop.DefaultValue = "= 0"
-                    Case "boolean"
-                        prop.LiteralDefVal = True
-                        prop.DefaultValue = "= False"
-                    Case "char"
-                        prop.LiteralDefVal = True
-                        prop.DefaultValue = "= vbNullChar"
-                    Case "string"
-                        prop.LiteralDefVal = True
-                        prop.DefaultValue = "= """""
-                    Case "date", "datetime"
-                        prop.LiteralDefVal = True
-                        prop.DefaultValue = "= #1/1/0001#"
-                End Select
+                SetDefValue(prop)
             End If
         Else
             prop.LiteralDefVal = TypeOf param.Default.DescendantNodes?(0) Is LiteralExpressionSyntax
@@ -260,10 +335,31 @@ $"    Public {MethodType} { param.Identifier}{Header.ParameterList} {AsClause}
             End If
         End If
 
-            prop.Type = prop.Type.Substring(2).Trim()
+        prop.Type = prop.Type.Substring(2).Trim()
         properties.Add(prop)
     End Sub
 
+    Private Shared Sub SetDefValue(ByRef prop As PropertyInfo)
+        Dim t = prop.Type.Substring(2).Trim()
+        Select Case t.Trim("?"c).ToLower()
+            Case "byte", "sbyte", "short", "ushort", "integer", "uinteger", "long", "ulong", "single", "double", "decimal"
+                prop.LiteralDefVal = True
+                prop.DefaultValue = "= 0"
+            Case "boolean"
+                prop.LiteralDefVal = True
+                prop.DefaultValue = "= False"
+            Case "char"
+                prop.LiteralDefVal = True
+                prop.DefaultValue = "= vbNullChar"
+            Case "string"
+                prop.LiteralDefVal = True
+                prop.DefaultValue = "= """""
+            Case "date", "datetime"
+                prop.LiteralDefVal = True
+                prop.DefaultValue = "= #1/1/0001#"
+        End Select
+        If t.EndsWith("?") Then prop.DefaultValue = "= Nothing"
+    End Sub
 
     Private Shared Function WriteProperties(Properties As List(Of PropertyInfo)) As String
         Dim props As New StringBuilder
@@ -454,7 +550,7 @@ $"    Public Function Clone() As {className}{typeParams}
             End If
 
             If p.LiteralDefVal AndAlso p.Type.ToLower() <> "string" Then
-                Dim type = p.Type & If(p.Type.EndsWith("?"), "", "?")
+                Dim type = If(p.Type.EndsWith("?"), $"[Optional](Of {p.Type})", p.Type & "?")
                 params.Append($"                Optional [{p.camelCaseName}] As {type} = Nothing")
             Else
                 params.Append($"                Optional [{p.camelCaseName}] As [Optional](Of {p.Type}) = Nothing")
@@ -477,8 +573,8 @@ $"    Public Function Clone() As {className}{typeParams}
 
     Private Shared Sub AddInheritedPropertiesInfo(
                                      inheritance As String,
-                                     properties As List(Of PropertyInfo)
-                         )
+                                     properties As List(Of PropertyInfo),
+                                     defaultPropInfo As PropertyInfo)
 
         Dim code = $"
 {importsList}
@@ -499,7 +595,7 @@ End Class
                 If prop IsNot Nothing AndAlso prop.DeclaredAccessibility = Accessibility.Public Then
                     Dim attrs = prop.GetAttributes()
                     Dim defValue = ""
-                    Dim isKey = False
+                    Dim isKey = defaultPropInfo.IsKey
                     For Each attr In attrs
                         If attr.AttributeClass.Name = "DefaultValueAttribute" Then
                             defValue = attr.ConstructorArguments(0).Value.ToString().Replace(StringQuote, """")
@@ -508,15 +604,21 @@ End Class
                         End If
                     Next
 
-                    properties.Add(New PropertyInfo() With {
+                    Dim propInfo = New PropertyInfo() With {
                         .Name = prop.Name,
-                        .Type = prop.Type.ToString(),
+                        .Type = "As " & prop.Type.ToString(),
                         .LiteralDefVal = If(defValue = "", False, defValue(0) = "1"c),
                         .DefaultValue = If(defValue = "", "", defValue.Substring(1)),
                         .IsKey = isKey,
-                        .IsReadOnly = prop.IsReadOnly,
-                        .AddOverrides = prop.IsMustOverride OrElse prop.IsOverridable
-                    })
+                        .IsReadOnly = prop.IsReadOnly OrElse defaultPropInfo.IsReadOnly,
+                        .InheritanceModifier = If(prop.IsMustOverride OrElse prop.IsOverridable, "Overrides", "Shadows")
+                    }
+
+                    If propInfo.DefaultValue = "" Then SetDefValue(propInfo)
+                    propInfo.Type = propInfo.Type.Substring(2).Trim()
+
+                    properties.Add(propInfo)
+
                 End If
             Next
         Catch
@@ -574,10 +676,10 @@ End Class
             Case "key"
                 propInfo.IsKey = True
 
-            Case "readonly"
+            Case "readonly", "immitable"
                 propInfo.IsReadOnly = True
 
-            Case "readonlykey", "immitable", "record"
+            Case "readonlykey", "record"
                 propInfo.IsKey = True
                 propInfo.IsReadOnly = True
 

@@ -1,0 +1,11 @@
+﻿Public Class Author(
+	ReadOnly Key ID = 0, 
+	ReadOnly Name = "",	
+    Books As List(Of Book)
+)
+
+Public Class Book(
+	ReadOnly Key ID%, 
+	ReadOnly Name As String,	
+    AuthorID As Integer
+)

@@ -1,12 +1,5 @@
 ﻿Imports System.Text, System.IO
-Imports System.Collections
-
-
-Public Class TestEnums(
-    State = TriState.False,
-    List = new List(Of Integer),
-    Value = MyValue
- )
+Imports System.Collections 
 
 Public Class Person(
 	ID = 0, 
@@ -14,8 +7,7 @@ Public Class Person(
     Address = (City := "", Street := "", No := 0)
 ) Inherits Test
 
-<Record>
-Public Class Student(
+Public Record Student(
     Name As String,
     ClassRoom = 0,
 	Grades As double, 

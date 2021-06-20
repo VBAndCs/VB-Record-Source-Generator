@@ -20,21 +20,13 @@ Namespace RecordGeneratorTests
 Imports System.Text, System.IO
 Imports System.Collections
 
-
-Public Class TestEnums(
-    State = TriState.False,
-    List = new List(Of Integer),
-    Value = MyValue
- )
-
 Public Class Person(
 	ID = 0, 
 	Name = "", 
     Address = (City := "", Street := "", No := 0)
 ) Inherits Test
 
-<Record>
-Public Class Student(
+Public Record Student(
     Name As String,
     ClassRoom = 0,
 	Grades As double, 
@@ -48,8 +40,7 @@ Public Class UniStudent(
     Collage As String,
     Print = Function() $"{Name}, {University}, {Collage}"
 ) Inherits Student
-   
-]]>.Value
+)]]>.Value
 
             Dim source As String = <![CDATA[
 Module Program
@@ -63,6 +54,8 @@ End Class
 
 
             Dim result = GetGeneratedOutput(source, rec)
+            Console.WriteLine(result.Output)
+
             Stop
 
             If result.Diagnostics.Length > 0 Then

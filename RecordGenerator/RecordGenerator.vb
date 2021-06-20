@@ -16,6 +16,7 @@ Public Class RecordGenerator
     End Sub
 
     Public Sub Execute(context As GeneratorExecutionContext) Implements ISourceGenerator.Execute
+        Dim errMsg = ""
         Try
             Dim recFiles = From file In context.AdditionalFiles
                            Where file.Path.ToLower().EndsWith(".rec")
@@ -36,8 +37,14 @@ Public Class RecordGenerator
                 RecordParser.Generate(context, recFile.GetText().ToString())
             Next
         Catch ex As Exception
-            Console.WriteLine(ex.Message)
+            errMsg = "'" & ex.Message
         End Try
+
+        If errMsg <> "" Then
+            context.AddSource("Error", SourceText.From(errMsg, Encoding.UTF8))
+        End If
+
+
     End Sub
 
 

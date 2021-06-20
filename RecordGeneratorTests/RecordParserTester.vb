@@ -13,8 +13,7 @@ Public Class Student(
     Print = Function() As String
                      return Name & Grades
                 End Function
-)
-]]>.Value
+)]]>.Value
 
             ' Test passes if no exception thrown
             ' This is a trick to debug the generator code, until it supports debugging

@@ -65,16 +65,39 @@ End Class
 Public Class RecordHelper
     Public Shared Function GetPropertyValuePairs(obj As Object) As String
         Dim sb As New System.Text.StringBuilder
-        Dim AddSep = False
+        Dim addSep = False
         For Each p In obj.GetType.GetProperties(Reflection.BindingFlags.Public Or Reflection.BindingFlags.Instance)
-            If AddSep Then
+            If addSep Then
                 sb.Append(", ")
             Else
-                AddSep = True
+                addSep = True
             End If
-            sb.Append($"{p.Name} = {p.GetValue(obj, Nothing)}")
+
+            Dim value = p.GetValue(obj, Nothing)
+            If TypeOf value IsNot String Then
+                Dim list = TryCast(value, IEnumerable)
+                If list IsNot Nothing Then
+                    Dim sbValue As New System.Text.StringBuilder()
+                    Dim addSep2 = False
+                    sbValue.Append("[")
+                    For Each item In list
+                        If addSep2 Then
+                            sbValue.Append(", ")
+                        Else
+                            addSep2 = True
+                        End If
+                        sbValue.Append(item.ToString())
+                    Next
+                    sbValue.Append("]")
+                    value = sbValue.ToString()
+                Else
+                    value = value.ToString()
+                End If
+            End If
+
+            sb.Append($"{p.Name} = {value}")
         Next
-        Return sb.ToString().TrimEnd({","c, " "c})
+        Return sb.ToString()
     End Function
 End Class
 ]]>.Value

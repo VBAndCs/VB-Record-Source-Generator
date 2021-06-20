@@ -1,0 +1,6 @@
+﻿
+Public Class TestEnums(
+    State = TriState.False,
+    List = new List(Of Integer),
+    Value = MyValue
+ )

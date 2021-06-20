@@ -13,7 +13,6 @@
         End Set
     End Property
 
-    Public AddOverrides As Boolean
     Public InheritanceModifier As String
     Public camelCaseName As String
     Public Type As String
