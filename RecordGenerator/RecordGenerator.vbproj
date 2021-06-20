@@ -23,6 +23,7 @@ See the readme for more info about how to use the Record Generator and the recor
     <PackageReleaseNotes># Ver 1.1:
 - Sipports using Record key word instead of &lt;Record&gt; Class.
 - Supprts using Ky, ReadOnly (Or Immutable) and ReadOnly Key (Or Immutable Key)  as keywords instead of Attrs.
+- Supports using any ,net or user-defined attrs with the class it's properties.
 - Supports using ?, (), and type chars after the property name.
 - Inhanced ToString method to show nested records, and list elements. 
 

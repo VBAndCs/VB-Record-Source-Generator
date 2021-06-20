@@ -2,11 +2,12 @@
 Imports System.Collections 
 
 Public Class Person(
-	ID = 0, 
+	Key ID = 0, 
 	Name = "", 
-    Address = (City := "", Street := "", No := 0)
+    <MyAttr>Address = (City := "", Street := "", No := 0)
 ) Inherits Test
 
+<MyAttr>
 Public Record Student(
     Name As String,
     ClassRoom = 0,
@@ -16,7 +17,7 @@ Public Record Student(
                 End Function
 ) Inherits Person
 
-Public Class UniStudent(
+<MyAttr>Public Class UniStudent(
     University As String,
     Collage As String,
     Print = Function() $"{Name}, {University}, {Collage}"

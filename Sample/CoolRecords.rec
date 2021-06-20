@@ -1,0 +1,6 @@
+﻿Public Record NameValue(Name ="", Value = 0.0)
+
+Public ReadOnly Structure ROStruct(X$, Y%, Z@)
+
+Friend ReadOnly Class ROClass(A As Integer, B As Integer)
+

@@ -59,21 +59,32 @@ Public Class RecordParser
                     If (PrevToken = "readonly" OrElse PrevToken = "immitable") AndAlso B4PrevToken <> "[" AndAlso B4PrevToken <> "<" Then
                         Dim st = If(i = 0, 0, tokens(i - 1).SpanStart)
                         sb.Remove(st, tokens(i).Span.End - st + 1)
+                        st = GetStartOfLineIfClassHeader(st, i, tokens)
                         sb.Insert(st, "<ReadOnlyKey>")
                         ' Skip ReadOnly
                         i -= 1
                         PrevToken = B4PrevToken
-                    ElseIf PrevToken <> "[" Then
+                    ElseIf PrevToken <> "[" AndAlso PrevToken <> "<" Then
                         Dim st = tokens(i).SpanStart
                         sb.Remove(st, tokens(i).Span.End - st + 1)
+                        st = GetStartOfLineIfClassHeader(st, i, tokens)
                         sb.Insert(st, "<Key>")
                     End If
 
-                Case "readonly", "immitable"
+                Case "readonly", "immutable"
                     If PrevToken <> "[" AndAlso PrevToken <> "<" Then
                         Dim st = tokens(i).SpanStart
                         sb.Remove(st, tokens(i).Span.End - st + 1)
+                        st = GetStartOfLineIfClassHeader(st, i, tokens)
                         sb.Insert(st, "<ReadOnly>")
+                    End If
+
+                Case "readonlykey", "immutablekey"
+                    If PrevToken <> "[" AndAlso PrevToken <> "<" Then
+                        Dim st = tokens(i).SpanStart
+                        sb.Remove(st, tokens(i).Span.End - st + 1)
+                        st = GetStartOfLineIfClassHeader(st, i, tokens)
+                        sb.Insert(st, "<ReadOnlyKey>")
                     End If
 
                 Case "record"
@@ -90,16 +101,53 @@ Public Class RecordParser
         Return sb.ToString()
     End Function
 
-    Public Shared Sub Parse(context? As GeneratorExecutionContext, code As String)
+    Private Shared Function GetStartOfLineIfClassHeader(st As Integer, pos As Integer, tokens() As SyntaxToken) As Integer
+        Dim found = False
+        For i = pos To tokens.Length - 1
+            If tokens(i).Kind = SyntaxKind.StatementTerminatorToken Then
+                Exit For
+            ElseIf tokens(i).Kind = SyntaxKind.ClassKeyword OrElse tokens(i).Kind = SyntaxKind.StructureKeyword Then
+                found = True
+                Exit For
+            End If
+        Next
 
+        If found Then
+            For i = pos To 0 Step -1
+                If tokens(i).Kind = SyntaxKind.StatementTerminatorToken Then
+                    Return tokens(i).Span.End
+                End If
+            Next
+            Return 0
+        End If
+
+        ' Not a class/structure
+        Return st
+    End Function
+
+    Public Shared Sub Parse(context? As GeneratorExecutionContext, code As String)
         Dim tokens = SyntaxFactory.ParseTokens(code).ToArray
+
+
+        ' Skip until class/structure token
+        Dim st = 0
         For i = 0 To tokens.Length - 1
+            If tokens(i).Kind = SyntaxKind.ClassKeyword OrElse
+                     tokens(i).Kind = SyntaxKind.StructureKeyword OrElse
+                     (tokens(1).Kind = SyntaxKind.IdentifierToken AndAlso tokens(i).Text.ToLower() = "record" AndAlso (i = 0 OrElse tokens(i - 1).Kind <> SyntaxKind.LessThanToken)) Then
+                st = i + 1
+                Exit For
+            End If
+        Next
+
+        For i = st To tokens.Length - 1
             Dim token = tokens(i)
-            If token.Text = "(" Then
-                If tokens(i + 1).Text.ToLower = "of" Then ' Skip tokens untile reaching "("
+
+            If token.Kind = SyntaxKind.OpenParenToken Then
+                If tokens(i + 1).Kind = SyntaxKind.OfKeyword Then ' Skip tokens untile reaching "("
                     For j = i + 1 To tokens.Length - 1
                         token = tokens(j)
-                        If token.Text = "(" Then Exit For
+                        If token.Kind = SyntaxKind.CloseParenToken Then Exit For
                     Next
                 End If
 
@@ -109,7 +157,7 @@ Public Class RecordParser
                 Dim pos = token.SpanStart + members.Span.Length
                 Dim inheritance = ""
 
-                If pos <code.Length Then
+                If pos < code.Length Then
                     Dim nextNode = SyntaxFactory.ParseSyntaxTree(code.Substring(pos)).GetRoot().ChildNodes(0)
                     If nextNode?.Kind = SyntaxKind.InheritsStatement Then
                         inheritance = nextNode.ToString()
@@ -130,16 +178,26 @@ Public Class RecordParser
                        definition As String,
                        paramList As ParameterListSyntax)
 
-        Dim tokens = SyntaxFactory.ParseSyntaxTree(definition).GetRoot().ChildNodes(0).ChildNodes(0).ChildNodesAndTokens.ToArray
+        Dim classStatement = SyntaxFactory.ParseSyntaxTree(definition).GetRoot().ChildNodes(0).ChildNodes(0)
+        Dim tokens = classStatement.ChildNodesAndTokens.ToArray()
         Dim DefaultPropInfo As New PropertyInfo
-
-        If tokens(0).Kind = SyntaxKind.AttributeList Then
-            DefaultPropInfo = GetPropertyInfo(tokens(0))
-            definition = definition.Substring(tokens(1).SpanStart)
-        End If
 
         Dim isClass = (From token In tokens
                        Where token.Kind = SyntaxKind.ClassKeyword).Count > 0
+
+        Dim attributeLists As SyntaxList(Of AttributeListSyntax)
+
+        If isClass Then
+            attributeLists = TryCast(classStatement, ClassStatementSyntax)?.AttributeLists
+        Else
+            attributeLists = TryCast(classStatement, StructureStatementSyntax)?.AttributeLists
+        End If
+
+        If attributeLists.Count > 0 Then
+            DefaultPropInfo = GetPropertyInfo(attributeLists)
+            Dim st = attributeLists(attributeLists.Count - 1).Span.End
+            definition = DefaultPropInfo.Attrs & vbCrLf & definition.Substring(st).TrimStart(ChrW(10), ChrW(13))
+        End If
 
         Dim result = (From token In tokens
                       Where token.Kind = SyntaxKind.IdentifierToken)
@@ -257,13 +315,13 @@ $"    Public {MethodType} { param.Identifier}{Header.ParameterList} {AsClause}
 
         Dim AccessAttr = param.AttributeLists
         Dim prop As PropertyInfo = Nothing
-        If AccessAttr.Count > 0 Then prop = GetPropertyInfo(AccessAttr(0))
+        If AccessAttr.Count > 0 Then prop = GetPropertyInfo(AccessAttr)
 
         Dim belongsToType = ""
         Dim id = param.Identifier
         prop.Name = id.Identifier.Text
 
-        ' Handel type chars
+        ' Handle type chars
         Dim n = prop.Name.Length - 1
         Dim c = prop.Name(n)
         Dim typeOfChar As String = ""
@@ -369,6 +427,8 @@ $"    Public {MethodType} { param.Identifier}{Header.ParameterList} {AsClause}
             If p.DefaultValue <> "" Then
                 props.AppendLine($"   <DefaultValue(""{If(p.LiteralDefVal, "1", "0")}{ p.DefaultValue.Replace("""", StringQuote)}"")>")
             End If
+
+            If p.Attrs <> "" Then props.AppendLine("   " & p.Attrs)
 
             props.Append("   Public ")
             If p.InheritanceModifier <> "" Then props.Append(p.InheritanceModifier & " ")
@@ -670,21 +730,27 @@ End Class
 
     End Function
 
-    Private Shared Function GetPropertyInfo(attributeList As AttributeListSyntax) As PropertyInfo
+    Private Shared Function GetPropertyInfo(attributeLists As SyntaxList(Of AttributeListSyntax)) As PropertyInfo
         Dim propInfo As New PropertyInfo
-        Select Case attributeList.Attributes(0).ToString().ToLower()
-            Case "key"
-                propInfo.IsKey = True
+        Dim attrs As New StringBuilder
 
-            Case "readonly", "immitable"
-                propInfo.IsReadOnly = True
+        For Each attrList In attributeLists
+            Select Case attrList.Attributes(0).ToString().ToLower()
+                Case "key"
+                    propInfo.IsKey = True
 
-            Case "readonlykey", "record"
-                propInfo.IsKey = True
-                propInfo.IsReadOnly = True
+                Case "readonly", "immutable"
+                    propInfo.IsReadOnly = True
 
-        End Select
+                Case "readonlykey", "immutablekey", "record"
+                    propInfo.IsKey = True
+                    propInfo.IsReadOnly = True
+                Case Else
+                    attrs.Append(attrList.ToString())
+            End Select
+        Next
 
+        propInfo.Attrs = attrs.ToString()
         Return propInfo
     End Function
 

@@ -18,7 +18,7 @@ Namespace RecordGeneratorTests
         Public Sub Execute()
             Dim rec As String = <![CDATA[
 Imports System.Text, System.IO
-Imports System.Collections
+Imports System.Collections 
 
 Public Class Person(
 	ID = 0, 
@@ -26,6 +26,7 @@ Public Class Person(
     Address = (City := "", Street := "", No := 0)
 ) Inherits Test
 
+<MyAttr>
 Public Record Student(
     Name As String,
     ClassRoom = 0,

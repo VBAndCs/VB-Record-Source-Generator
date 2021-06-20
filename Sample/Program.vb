@@ -38,3 +38,9 @@ End Module
 Public Class Test
     Public Property [Date] As Date
 End Class
+
+
+Public Class MyAttrAttribute
+    Inherits Attribute
+
+End Class

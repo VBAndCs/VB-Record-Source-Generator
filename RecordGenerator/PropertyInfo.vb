@@ -18,4 +18,5 @@
     Public Type As String
     Public DefaultValue As String
     Friend LiteralDefVal As Boolean
+    Friend Attrs As String
 End Structure
