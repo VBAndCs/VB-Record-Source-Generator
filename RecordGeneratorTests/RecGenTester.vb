@@ -6,6 +6,8 @@ Imports System.Collections.Immutable
 Imports System.Diagnostics.CodeAnalysis
 Imports System.Reflection
 Imports System.Runtime.InteropServices
+Imports System.Security.Cryptography
+Imports System.Text
 Imports Microsoft.CodeAnalysis
 Imports Microsoft.CodeAnalysis.VisualBasic
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
@@ -13,65 +15,6 @@ Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Namespace RecordGeneratorTests
     <TestClass>
     Public Class RecGenTester
-
-        <TestMethod>
-        Public Sub Execute()
-            Dim rec As String = <![CDATA[
-Imports System.Text, System.IO
-Imports System.Collections 
-
-Public Class Person(
-	ID = 0, 
-	Name = "", 
-    Address = (City := "", Street := "", No := 0)
-) Inherits Test
-
-<MyAttr>
-Public Record Student(
-    Name As String,
-    ClassRoom = 0,
-	Grades As double, 
-    Print = Function()
-                     return Name & Grades
-                End Function
-) Inherits Person
-
-Public Class UniStudent(
-    University As String,
-    Collage As String,
-    Print = Function() $"{Name}, {University}, {Collage}"
-) Inherits Student
-)]]>.Value
-
-            Dim source As String = <![CDATA[
-Module Program
-    Public Const MyValue As Integer = 1
-End Module
-
-Public Class Test
-    Public Property [Date] As Date
-End Class
-]]>.Value
-
-
-            Dim result = GetGeneratedOutput(source, rec)
-            Console.WriteLine(result.Output)
-
-            Stop
-
-            If result.Diagnostics.Length > 0 Then
-                Console.WriteLine("Diagnostics:")
-                For Each diag In result.Diagnostics
-                    Console.WriteLine("   " & diag.ToString())
-                Next
-                Console.WriteLine()
-                Console.WriteLine("Output:")
-            End If
-
-            Console.WriteLine(result.Output)
-
-        End Sub
-
         Private Function GetGeneratedOutput(source As String, additionalFile As String) As (Diagnostics As ImmutableArray(Of Diagnostic), Output As String)
 
             Dim syntaxTree = VisualBasicSyntaxTree.ParseText(source)
@@ -84,16 +27,14 @@ End Class
                 End If
             Next
 
-
-
-            Dim compilation = VisualBasicCompilation.Create("Foo", New SyntaxTree() {syntaxTree}, references, New VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+            Dim compilation = VisualBasicCompilation.Create("__SOURCE_GENERATOR_TEST__", New SyntaxTree() {syntaxTree}, references, New VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
 
             Dim generator1 As ISourceGenerator = New RecordGenerator.RecordGenerator()
 
             Dim iaGenerator = {generator1}.ToImmutableArray
 
             Dim driver = VisualBasicGeneratorDriver.Create(iaGenerator,
-                                                       {CType(New MyAdditionalText("JustFotTest.rec", additionalFile), AdditionalText)}.ToImmutableArray,
+                                                       {CType(New MyAdditionalText("__Just_For_Test__.rec", additionalFile), AdditionalText)}.ToImmutableArray,
                                                        Nothing,
                                                        Nothing)
 
@@ -105,5 +46,218 @@ End Class
 
         End Function
 
+
+        Function GetHash(sourceStr As String) As String
+            Dim b = ASCIIEncoding.ASCII.GetBytes(sourceStr)
+            Dim hash = New MD5CryptoServiceProvider().ComputeHash(b)
+            Dim sb As New StringBuilder(hash.Length)
+            For i = 0 To hash.Length - 1
+                sb.Append(hash(i).ToString("X2"))
+            Next
+            Return sb.ToString()
+        End Function
+
+        <TestMethod>
+        Public Sub NameValue()
+            Dim TestRecord = <![CDATA[Public Record NameValue(Name ="", Value = 0.0)]]>.Value
+            Dim result = GetGeneratedOutput(TestSourceCode, TestRecord)
+            For Each diag In result.Diagnostics
+                Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
+            Next
+            Assert.AreEqual(GetHash(result.Output), "23EA3418815F4B00DDDDFAB7FAE8B8CB")
+        End Sub
+
+
+        <TestMethod>
+        Public Sub ROStruct()
+            Dim TestRecord = <![CDATA[Public ReadOnly Structure ROStruct(X$, Y%, Z@)]]>.Value
+            Dim result = GetGeneratedOutput(TestSourceCode, TestRecord)
+            For Each diag In result.Diagnostics
+                Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
+            Next
+            Assert.AreEqual(GetHash(result.Output), "D7EA876A72D6310B941A5BC53DB79720")
+        End Sub
+
+        <TestMethod>
+        Public Sub ROClass()
+            Dim TestRecord = <![CDATA[Friend ReadOnly Class ROClass(A As Integer, B As Integer)]]>.Value
+            Dim result = GetGeneratedOutput(TestSourceCode, TestRecord)
+            For Each diag In result.Diagnostics
+                Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
+            Next
+            Assert.AreEqual(GetHash(result.Output), "23D3E71CA11B1B810AE87A4D7953EF2A")
+        End Sub
+
+        <TestMethod>
+        Public Sub Author()
+            Dim TestRecord = <![CDATA[<MyAttr>
+Public Key Class Author(
+	 ReadOnly Key ID = 0, 
+	ReadOnly Name = "",	
+    Books As List(Of Book)
+)]]>.Value
+            Dim result = GetGeneratedOutput(TestSourceCode, TestRecord)
+            For Each diag In result.Diagnostics
+                Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
+            Next
+            Assert.AreEqual(GetHash(result.Output), "379C904DBE64C47E4DE9EAF5B6BAC276")
+        End Sub
+
+        <TestMethod>
+        Public Sub Book()
+            Dim TestRecord = <![CDATA[
+Public Class Book(
+	ReadOnly Key ID%, 
+	<MyAttr>ReadOnly Name As String,	
+    AuthorID As Integer
+) ]]>.Value
+            Dim result = GetGeneratedOutput(TestSourceCode, TestRecord)
+            For Each diag In result.Diagnostics
+                Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
+            Next
+            Assert.AreEqual(GetHash(result.Output), "BD0B74EF5A197005C806FAC65D8CC256")
+        End Sub
+
+        <TestMethod>
+        Public Sub Person()
+            Dim TestRecord = <![CDATA[
+Imports System.Text, System.IO
+Imports System.Collections 
+
+Public Class Person(
+	Key ID = 0, 
+	Name = "", 
+    <MyAttr>Address = (City := "", Street := "", No := 0)
+) Inherits Test
+
+]]>.Value
+
+            Dim result = GetGeneratedOutput(TestSourceCode, TestRecord)
+            For Each diag In result.Diagnostics
+                Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
+            Next
+            Assert.AreEqual(GetHash(result.Output), "C913545B46E8089C9A46DD63B22C6662")
+        End Sub
+
+        <TestMethod>
+        Public Sub Student()
+            Dim TestRecord = <![CDATA[<MyAttr>
+Public Record Student(
+    Name As String,
+    ClassRoom = 0,
+	Grades As double, 
+    Print = Function()
+                     return Name & Grades
+                End Function
+) Inherits Person
+]]>.Value
+            Dim result = GetGeneratedOutput(TestSourceCode, TestRecord)
+            For Each diag In result.Diagnostics
+                Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
+            Next
+            Assert.AreEqual(GetHash(result.Output), "85C5A7486FC88663E88388715DD7DBDA")
+        End Sub
+
+        <TestMethod>
+        Public Sub UniStudent()
+            Dim TestRecord = <![CDATA[<MyAttr>Public Class UniStudent(
+    University As String,
+    Collage As String,
+    Print = Function() $"{Name}, {University}, {Collage}"
+) Inherits Student]]>.Value
+            Dim result = GetGeneratedOutput(TestSourceCode, TestRecord)
+            For Each diag In result.Diagnostics
+                Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
+            Next
+            Assert.AreEqual(GetHash(result.Output), "238DCFCB9E7435E37542F6C650733EE5")
+
+        End Sub
+
+        <TestMethod>
+        Public Sub EnumsAndConsts()
+            Dim TestRecord = <![CDATA[
+Public Class TestEnums(
+    Immutable State = TriState.False,
+    ImmutableKey List = new List(Of Integer),
+    Immutable Key Value = MyValue
+ )]]>.Value
+            Dim result = GetGeneratedOutput(TestSourceCode, TestRecord)
+            For Each diag In result.Diagnostics
+                Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
+            Next
+            Assert.AreEqual(GetHash(result.Output), "868ADB786CA37DDB75B281A9B231DA68")
+        End Sub
+
+        <TestMethod>
+        Public Sub ThreeSingleLineRecords()
+            Dim TestRecord = <![CDATA[Public Record NameValue(Name ="", Value = 0.0)
+
+Public ReadOnly Structure ROStruct(X$, Y%, Z@)
+
+Friend ReadOnly Class ROClass(A As Integer, B As Integer)
+
+]]>.Value
+            Dim result = GetGeneratedOutput(TestSourceCode, TestRecord)
+            For Each diag In result.Diagnostics
+                Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
+            Next
+        End Sub
+
+        <TestMethod>
+        Public Sub ThreeMultiLineRecords()
+            Dim TestRecord = <![CDATA[Imports System.Text, System.IO
+Imports System.Collections 
+
+Public Class Person(
+	Key ID = 0, 
+	Name = "", 
+    <MyAttr>Address = (City := "", Street := "", No := 0)
+) Inherits Test
+
+<MyAttr>
+Public Record Student(
+    Name As String,
+    ClassRoom = 0,
+	Grades As double, 
+    Print = Function()
+                     return Name & Grades
+                End Function
+) Inherits Person
+
+<MyAttr>Public Class UniStudent(
+    University As String,
+    Collage As String,
+    Print = Function() $"{Name}, {University}, {Collage}"
+) Inherits Student
+]]>.Value
+            Dim result = GetGeneratedOutput(TestSourceCode, TestRecord)
+            For Each diag In result.Diagnostics
+                Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
+            Next
+        End Sub
+
+        <TestMethod>
+        Public Sub TwoMultiLineRecords()
+            Dim TestRecord = <![CDATA[<MyAttr>
+Public Key Class Author(
+	 ReadOnly Key ID = 0, 
+	ReadOnly Name = "",	
+    Books As List(Of Book)
+)
+
+Public Class Book(
+	ReadOnly Key ID%, 
+	<MyAttr>ReadOnly Name As String,	
+    AuthorID As Integer
+) 
+]]>.Value
+            Dim result = GetGeneratedOutput(TestSourceCode, TestRecord)
+            For Each diag In result.Diagnostics
+                Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
+            Next
+
+        End Sub
+
     End Class
+
 End Namespace

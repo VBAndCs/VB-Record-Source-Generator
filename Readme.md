@@ -78,8 +78,6 @@ In C# record all properties are keys, but in our vb record we have the option to
 Note that the class attrs overrides property attrs.
 So, you have all the options on the table, as you are not forces to generate immutable classes only, and not forced to use all properties as keys, but still can do both with one `Record` attr/keyword.
 
-Note that our special attrs/keywords (`Record`, `Key`, `ReadOnly` and `ReadOnlyKey`) must appear before any other mormal attrs you use. 
-
 You can also use generic type parameters after the name of the class such as:
 ```VB.NET
 Class Foo(Of T)(X As T, Y As T)

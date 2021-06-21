@@ -9,4 +9,4 @@ Public Class Book(
 	ReadOnly Key ID%, 
 	<MyAttr>ReadOnly Name As String,	
     AuthorID As Integer
-)
+) 

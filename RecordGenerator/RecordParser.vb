@@ -131,28 +131,40 @@ Public Class RecordParser
 
         ' Skip until class/structure token
         Dim st = 0
-        For i = 0 To tokens.Length - 1
+        Dim L = tokens.Length - 1
+        For i = 0 To L
             If tokens(i).Kind = SyntaxKind.ClassKeyword OrElse
                      tokens(i).Kind = SyntaxKind.StructureKeyword OrElse
-                     (tokens(1).Kind = SyntaxKind.IdentifierToken AndAlso tokens(i).Text.ToLower() = "record" AndAlso (i = 0 OrElse tokens(i - 1).Kind <> SyntaxKind.LessThanToken)) Then
+                     (tokens(i).Kind = SyntaxKind.IdentifierToken AndAlso tokens(i).Text.ToLower() = "record" AndAlso (i = 0 OrElse tokens(i - 1).Kind <> SyntaxKind.LessThanToken)) Then
                 st = i + 1
                 Exit For
             End If
         Next
 
-        For i = st To tokens.Length - 1
+        For i = st To L
             Dim token = tokens(i)
 
             If token.Kind = SyntaxKind.OpenParenToken Then
-                If tokens(i + 1).Kind = SyntaxKind.OfKeyword Then ' Skip tokens untile reaching "("
-                    For j = i + 1 To tokens.Length - 1
+                If i < L AndAlso tokens(i + 1).Kind = SyntaxKind.OfKeyword Then ' Skip tokens untile reaching "("
+                    For j = i + 1 To L
                         token = tokens(j)
                         If token.Kind = SyntaxKind.CloseParenToken Then Exit For
                     Next
                 End If
 
-                Dim definition = Lower(code.Substring(0, token.SpanStart).TrimStart(ChrW(10), ChrW(13)), True)
-                Dim members = SyntaxFactory.ParseParameterList(code.Substring(token.SpanStart))
+                Dim definition = ""
+                Try
+                    definition = Lower(code.Substring(0, token.SpanStart).TrimStart(ChrW(10), ChrW(13)), True)
+                Catch ex As Exception
+                    Throw New Exception("This record doesn't have a valid definition:" & vbCrLf & definition)
+                End Try
+
+                Dim members As ParameterListSyntax
+                Try
+                    members = SyntaxFactory.ParseParameterList(code.Substring(token.SpanStart))
+                Catch ex As Exception
+                    Throw New Exception("This record doesn't have a valid memberlist:" & vbCrLf & definition)
+                End Try
 
                 Dim pos = token.SpanStart + members.Span.Length
                 Dim inheritance = ""
@@ -202,10 +214,8 @@ Public Class RecordParser
         Dim result = (From token In tokens
                       Where token.Kind = SyntaxKind.IdentifierToken)
 
-
         If Not result.Any Then
-            context.Value.AddSource("Error", SourceText.From("' Record must have a name" & vbCrLf & "'" & definition, Encoding.UTF8))
-            Return
+            Throw New Exception("This record doesn't have a name:" & vbCrLf & definition)
         End If
 
         Dim className = result.First.ToString()
@@ -234,8 +244,8 @@ Public Class RecordParser
         ' ------------------------Generate the record class/struct ----------------------------
 
         Dim record As New StringBuilder(
-"Option Explicit on
-Option Strict off
+"Option Explicit On
+Option Strict Off
 Option Infer On
 Option Compare Binary
 

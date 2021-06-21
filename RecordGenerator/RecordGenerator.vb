@@ -5,7 +5,6 @@ Imports System.Text
 Imports Microsoft.CodeAnalysis
 Imports Microsoft.CodeAnalysis.Text
 Imports Microsoft.CodeAnalysis.VisualBasic
-Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
 
 <Generator(LanguageNames.VisualBasic)>
 Public Class RecordGenerator
@@ -16,15 +15,14 @@ Public Class RecordGenerator
     End Sub
 
     Public Sub Execute(context As GeneratorExecutionContext) Implements ISourceGenerator.Execute
-        Dim errMsg = ""
-        Try
-            Dim recFiles = From file In context.AdditionalFiles
+        Dim errList As New List(Of (RecordName As String, Code As String, Exception As Exception))
+
+        Dim recFiles = From file In context.AdditionalFiles
                            Where file.Path.ToLower().EndsWith(".rec")
 
-            If Not recFiles.Any Then Return
+        If Not recFiles.Any Then Return
 
-            Dim Namespaces = context.Compilation
-
+        Try
             context.AddSource(NameOf(OptionalStruct), SourceText.From(OptionalStruct, Encoding.UTF8))
             context.AddSource(NameOf(HelperClass), SourceText.From(HelperClass, Encoding.UTF8))
 
@@ -33,18 +31,36 @@ Public Class RecordGenerator
                     SyntaxFactory.ParseSyntaxTree(HelperClass)
             )
 
-            For Each recFile In recFiles
-                RecordParser.Generate(context, recFile.GetText().ToString())
-            Next
         Catch ex As Exception
-            errMsg = "'" & ex.Message
+            If context.Compilation.AssemblyName <> "" Then
+                Throw ex
+            End If
+
         End Try
 
-        If errMsg <> "" Then
-            context.AddSource("Error", SourceText.From(errMsg, Encoding.UTF8))
-        End If
+        For Each recFile In recFiles
+            Try
+                RecordParser.Generate(context, recFile.GetText().ToString())
 
+            Catch ex As Exception
+                If recFile.Path = "__Just_For_Test__.rec" Then
+                    Throw ex ' To make the test fail
+                Else
+                    errList.Add((IO.Path.GetFileNameWithoutExtension(recFile.Path), recFile.GetText().ToString(), ex))
+                End If
+            End Try
+        Next
 
+        For Each errDetails In errList
+            context.AddSource("_Error_" & errDetails.RecordName, SourceText.From($"
+Module {errDetails.RecordName}_ErrorDetails
+     ' The following record:
+     ' {errDetails.Code.Replace(vbLf, vbLf & "'")}
+     ' cuased this error:
+     ' {errDetails.Exception.Message.Replace(vbLf, vbLf & "'")}
+     ' {errDetails.Exception.StackTrace.Replace(vbLf, vbLf & "'")}
+End Module", Encoding.UTF8))
+        Next
     End Sub
 
 

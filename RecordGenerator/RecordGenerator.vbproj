@@ -11,7 +11,7 @@
   <PropertyGroup>
     <PackageId>Visual-Basic-Record-Generator</PackageId>
     <Title>VB.NET Record Source Generator</Title>
-    <PackageVersion>1.1.0.0</PackageVersion>
+    <PackageVersion>1.1.1.0</PackageVersion>
     <Authors>Mohammad Hamdy Ghanem</Authors>
     <PackageProjectUrl>https://github.com/VBAndCs/VB-Record-Source-Generator</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
@@ -25,7 +25,7 @@ See the readme for more info about how to use the Record Generator and the recor
 - Supprts using Ky, ReadOnly (Or Immutable) and ReadOnly Key (Or Immutable Key)  as keywords instead of Attrs.
 - Supports using any ,net or user-defined attrs with the class it's properties.
 - Supports using ?, (), and type chars after the property name.
-- Inhanced ToString method to show nested records, and list elements. 
+- Enhanced ToString method to show nested records, and list elements. 
 
 # Ver1.0: 
 - Supports writing methods as lampda expressions.
@@ -33,7 +33,7 @@ See the readme for more info about how to use the Record Generator and the recor
 - Supports type inference for properties with default Values.</PackageReleaseNotes>
     <PackageTags>VB.NET, Records, Source Generators</PackageTags>
     <NoPackageAnalysis>true</NoPackageAnalysis>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
