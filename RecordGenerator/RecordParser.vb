@@ -28,10 +28,11 @@ Public Class RecordParser
 
 
     Public Shared Sub Generate(context? As GeneratorExecutionContext, code As String)
+        Dim st = 0
         importsList.Clear()
         For Each node In SyntaxFactory.ParseSyntaxTree(code).GetRoot.ChildNodes
             If node.Kind <> SyntaxKind.ImportsStatement Then
-                code = code.Substring(node.SpanStart)
+                st = node.SpanStart
                 Exit For
             End If
 
@@ -40,10 +41,11 @@ Public Class RecordParser
             Next
         Next
 
+        If importsList.Length > 0 Then code = code.Substring(st)
         Parse(context, Lower(code, False))
     End Sub
 
-    Private Shared Function Lower(code As String, isClassHeader As Boolean) As String
+    Public Shared Function Lower(code As String, isClassHeader As Boolean) As String
         Dim sb As New StringBuilder(code)
         Dim tokens = SyntaxFactory.ParseTokens(code).ToArray
         Dim Token = ""
@@ -106,7 +108,8 @@ Public Class RecordParser
         For i = pos To tokens.Length - 1
             If tokens(i).Kind = SyntaxKind.StatementTerminatorToken Then
                 Exit For
-            ElseIf tokens(i).Kind = SyntaxKind.ClassKeyword OrElse tokens(i).Kind = SyntaxKind.StructureKeyword Then
+            ElseIf (tokens(i).Kind = SyntaxKind.ClassKeyword OrElse tokens(i).Kind = SyntaxKind.StructureKeyword) AndAlso
+                (i = 0 OrElse tokens(i - 1).Kind <> SyntaxKind.OpenBraceToken) Then
                 found = True
                 Exit For
             End If
@@ -146,10 +149,12 @@ Public Class RecordParser
 
             If token.Kind = SyntaxKind.OpenParenToken Then
                 If i < L AndAlso tokens(i + 1).Kind = SyntaxKind.OfKeyword Then ' Skip tokens untile reaching "("
-                    For j = i + 1 To L
+                    Dim j = i + 1
+                    Do While j < L
                         token = tokens(j)
-                        If token.Kind = SyntaxKind.CloseParenToken Then Exit For
-                    Next
+                        If token.Kind = SyntaxKind.CloseParenToken Then Continue For
+                        j += 1
+                    Loop
                 End If
 
                 Dim definition = ""
@@ -220,9 +225,20 @@ Public Class RecordParser
 
         Dim className = result.First.ToString()
         Dim typeParams = ""
-        Dim lastToken = tokens(tokens.Length - 1)
-        If lastToken.Kind = SyntaxKind.TypeParameterList Then
-            typeParams = lastToken.ToString()
+        Dim typeParamLists = classStatement.ChildNodes.OfType(Of TypeParameterListSyntax)
+        If typeParamLists.Any Then
+            Dim typeParamList = typeParamLists.First
+            Dim addSep = False
+            typeParams = "(Of "
+            For Each t In typeParamList.Parameters
+                If addSep Then
+                    typeParams += ", "
+                Else
+                    addSep = True
+                End If
+                typeParams += t.Identifier.Text
+            Next
+            typeParams += ")"
         End If
 
         Dim Properties As New List(Of PropertyInfo)
@@ -314,7 +330,7 @@ $"    Public {MethodType} { param.Identifier}{Header.ParameterList} {AsClause}
     End {MethodType}")
     End Sub
 
-    Private Shared Sub AddPropertyInfo(
+    Public Shared Sub AddPropertyInfo(
                                       inheritance As String,
                                       methods As List(Of String),
                                       properties As List(Of PropertyInfo),
@@ -330,6 +346,7 @@ $"    Public {MethodType} { param.Identifier}{Header.ParameterList} {AsClause}
         Dim belongsToType = ""
         Dim id = param.Identifier
         prop.Name = id.Identifier.Text
+        If prop.Name = "" Then Return
 
         ' Handle type chars
         Dim n = prop.Name.Length - 1
@@ -429,7 +446,7 @@ $"    Public {MethodType} { param.Identifier}{Header.ParameterList} {AsClause}
         If t.EndsWith("?") Then prop.DefaultValue = "= Nothing"
     End Sub
 
-    Private Shared Function WriteProperties(Properties As List(Of PropertyInfo)) As String
+    Public Shared Function WriteProperties(Properties As List(Of PropertyInfo)) As String
         Dim props As New StringBuilder
         For Each p In Properties
             If p.IsKey Then props.AppendLine("   <Key>")
@@ -450,7 +467,7 @@ $"    Public {MethodType} { param.Identifier}{Header.ParameterList} {AsClause}
         Return props.ToString()
     End Function
 
-    Private Shared Sub WriteConstructor(Properties As List(Of PropertyInfo), record As StringBuilder)
+    Public Shared Sub WriteConstructor(Properties As List(Of PropertyInfo), record As StringBuilder)
         Dim params As New StringBuilder
         Dim body As New StringBuilder
         Dim addSep = False
@@ -557,7 +574,7 @@ $"    Public Shared Operator =(FirstRecord As {className}{typeParams}, secondRec
         record.AppendLine()
     End Sub
 
-    Private Shared Sub WriteEquals(className As String, typeParams As String, Properties As List(Of PropertyInfo), record As StringBuilder)
+    Public Shared Sub WriteEquals(className As String, typeParams As String, Properties As List(Of PropertyInfo), record As StringBuilder)
         Dim keys = From p In Properties
                    Where p.IsKey
 
@@ -606,7 +623,7 @@ $"    Public Function Clone() As {className}{typeParams}
         Next
     End Sub
 
-    Private Shared Sub WriteWith(className As String, typeParams As String, Properties As List(Of PropertyInfo), record As StringBuilder)
+    Public Shared Sub WriteWith(className As String, typeParams As String, Properties As List(Of PropertyInfo), record As StringBuilder)
         Dim params As New StringBuilder
         Dim body As New StringBuilder
         Dim addSep = False
@@ -641,7 +658,7 @@ $"    Public Function Clone() As {className}{typeParams}
         record.AppendLine()
     End Sub
 
-    Private Shared Sub AddInheritedPropertiesInfo(
+    Public Shared Sub AddInheritedPropertiesInfo(
                                      inheritance As String,
                                      properties As List(Of PropertyInfo),
                                      defaultPropInfo As PropertyInfo)

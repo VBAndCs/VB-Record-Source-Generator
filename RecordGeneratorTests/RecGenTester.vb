@@ -3,9 +3,7 @@ Option Strict On
 Option Infer On
 
 Imports System.Collections.Immutable
-Imports System.Diagnostics.CodeAnalysis
 Imports System.Reflection
-Imports System.Runtime.InteropServices
 Imports System.Security.Cryptography
 Imports System.Text
 Imports Microsoft.CodeAnalysis
@@ -15,19 +13,10 @@ Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Namespace RecordGeneratorTests
     <TestClass>
     Public Class RecGenTester
+
         Private Function GetGeneratedOutput(source As String, additionalFile As String) As (Diagnostics As ImmutableArray(Of Diagnostic), Output As String)
 
-            Dim syntaxTree = VisualBasicSyntaxTree.ParseText(source)
-
-            Dim references As List(Of MetadataReference) = New List(Of MetadataReference)
-            Dim assemblies As Assembly() = AppDomain.CurrentDomain.GetAssemblies()
-            For Each assembly As Assembly In assemblies
-                If Not assembly.IsDynamic Then
-                    references.Add(MetadataReference.CreateFromFile(assembly.Location))
-                End If
-            Next
-
-            Dim compilation = VisualBasicCompilation.Create("__SOURCE_GENERATOR_TEST__", New SyntaxTree() {syntaxTree}, references, New VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+            Dim compilation = GetCompilation(source)
 
             Dim generator1 As ISourceGenerator = New RecordGenerator.RecordGenerator()
 
@@ -67,6 +56,15 @@ Namespace RecordGeneratorTests
             Assert.AreEqual(GetHash(result.Output), "23EA3418815F4B00DDDDFAB7FAE8B8CB")
         End Sub
 
+        <TestMethod>
+        Public Sub Info()
+            Dim TestRecord = <![CDATA[Record Info(Of T1, T2, T3 As New)(A As T1, B As T2, C As T3)]]>.Value
+            Dim result = GetGeneratedOutput(TestSourceCode, TestRecord)
+            For Each diag In result.Diagnostics
+                Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
+            Next
+            Assert.AreEqual(GetHash(result.Output), "042C45F43F5EB37FB23EF4CC654B0385")
+        End Sub
 
         <TestMethod>
         Public Sub ROStruct()
@@ -136,7 +134,7 @@ Public Class Person(
             For Each diag In result.Diagnostics
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
-            Assert.AreEqual(GetHash(result.Output), "C913545B46E8089C9A46DD63B22C6662")
+            Assert.AreEqual(GetHash(result.Output), "887CA26CBCA0BDEBB9B821BBD497AFE7")
         End Sub
 
         <TestMethod>

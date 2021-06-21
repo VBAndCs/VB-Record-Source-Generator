@@ -1,4 +1,4 @@
-﻿Friend Structure PropertyInfo
+﻿Public Structure PropertyInfo
     Public IsReadOnly As Boolean
     Public IsKey As Boolean
 
@@ -9,7 +9,9 @@
         End Get
         Set(value As String)
             _name = value
-            camelCaseName = _name(0).ToString.ToLower + _name.Substring(1)
+            If _name = "" Then Return
+
+            camelCaseName = _name(0).ToString.ToLower + If(_name.Length = 1, "", _name.Substring(1))
         End Set
     End Property
 

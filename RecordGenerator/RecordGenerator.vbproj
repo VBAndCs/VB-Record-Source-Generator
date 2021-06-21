@@ -11,7 +11,7 @@
   <PropertyGroup>
     <PackageId>Visual-Basic-Record-Generator</PackageId>
     <Title>VB.NET Record Source Generator</Title>
-    <PackageVersion>1.1.1.0</PackageVersion>
+    <PackageVersion>1.1.2.0</PackageVersion>
     <Authors>Mohammad Hamdy Ghanem</Authors>
     <PackageProjectUrl>https://github.com/VBAndCs/VB-Record-Source-Generator</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>

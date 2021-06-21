@@ -4,3 +4,5 @@ Public ReadOnly Structure ROStruct(X$, Y%, Z@)
 
 Friend ReadOnly Class ROClass(A As Integer, B As Integer)
 
+Record Info(Of T1, T2, T3 As New)(A As T1, B As T2, C As T3)
+
