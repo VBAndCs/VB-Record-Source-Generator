@@ -101,21 +101,48 @@ Dim Mohmmad = New Student( ).
     WithUniversity("Cairo University")
 ```
 
-And don't forget, you can design your recotrd to have some mutable properties, so, you can use the `With {}` initializer on them.
+But be carful that each WithX method in the chain crates a new record, so avoid using WithX chains inside loops and recursive functions.
+And as you can design a recotrd with some mutable properties, you can use the `With {}` initializer on them, so you can have a mixture initialization using the constructor, With, WithX and with {} expression. For example, suppose you have these two records:
+```VB.NET
+Public Key Class Author(
+    ReadOnly Key ID = 0, 
+    ReadOnly Name = "",	
+    Books As List(Of Book)
+)
+
+Public Class Book(
+    ReadOnly Key ID%, 
+    ReadOnly Name As String,	
+    AuthorID As Integer
+) 
+```
+
+You can crate an author with two books like this:
+```VB.NET
+Dim auth1 As New Author(iD:=1, name:="Author1") With {
+     .Books = New List(Of Book) From {
+           New Book(iD:=1, name:="Book1") With {.AuthorID = 1},
+           New Book() With {.AuthorID = 1}.WithID(2).WithName("Book2")
+     }
+}
+```
 
 # Sending Nothing to optional params:
-I allow you to set a default values for record properties, where I use the constructor to set them if the corresponding optional params are missing. I use this way because VB compiler refuses using any default value for the optional param unless it's a constant, and the only constant valid for objects is Nothing. So, I had to use Nothing as the default value of the param, and wrote an `If statement` to set the actual default value you provided instead of `Nothing`. The problem here is: what if you send the value `Nothing` to the parameter and really want to reset the property to Nothing? Unfortunately, this will not happen, because the If statement will replace nothing with the default value!
-To solve this issue, I defined all params to be `Optional(Of T)`. This structure is like the nullable structure, with `HasValue` and `Value` properties. It works as follows:
-- when the optional param is missing, or you send the value `Nothing` to the param, `HasValue = false`.
-- when you send `new [Optional](Of T)(Nothing)` to the param, `HasValue = True` and `Value` contains `Nothing`!
-- You can pass any normal value of type T directly to the param and it will be implicitly concerted to `Optional(Of T)`, and will be implicitly concerted back to T when setting the property value.
+I allow you to set a default values for record properties, where I use the constructor to set them if the corresponding optional params are missing. I use this way because VB compiler refuses using any default value for the optional param unless it's a constant, and the only constant valid for objects is Nothing. So, I had to use Nothing as the default value of the param, and wrote an `If statement` to set the actual default value you provided instead of `Nothing`. 
+The problem here is: what if you send the value `Nothing` to the parameter and really want to reset the property to Nothing? 
+Unfortunately, this will not happen, because the If statement will replace nothing with the default value!
+To solve this issue, I defined value type params as nullable, and defined nullable value types and ref typs params as `Optional(Of T)`. 
+Both `Nullable(Of T)` and `Optional(Of T)` structures have `HasValue`and `Value` properties. So:
+- When the optional param is missing, or you send the value `Nothing` to the param, the `HasValue` proprety will be false`, and I will set the default value (or copy the value from the current record if you are using the `With` method).
+- If you want to set an ref type to Nothing, send `new [Optional](Of T)(Nothing)` to the param. In this case, `HasValue` will be True and `Value` will contain `Nothing`!
+- You can pass any normal value directly to the param and it will be implicitly converted to `Nullable(Of T)` or `Optional(Of T)`, and will be implicitly concerted back to T when setting the property value.
 
-In fact you don't have to worry about all these details, because it is used internally in the generated class. All that you want to know, is that when you need to send `Nothing` to any object, all you have to do is send one of these alternatives:
+In fact you don't have to worry about all these details, because it is used internally in the generated class. All that you want to know, is that when you need to send `Nothing` to a ref type, just send one of these alternatives to the param:
 1. `new [Optional](Of T)(Nothing)`
 2. `[Optional](Of T).Nothing`
 3. `new [Nothing](Of T)`
 Where T is the type of the property.
-Note that this is not needed with value types, as I use the Nullable structure instead. It is needed only with value-type params of the `With` methods, so I can set it's default vakue to Nothing (an actual nothing that will be restored in the nullable sturcture), as an indication of that param is missing, so I copy the value of the property from the current record (Me), to the new returned record.
+Note that this is not needed with value types, unless they are nullable (Like `Integer?`). I treat Nullable types as ref types because you may want to set them to Nothing.
 
 # To Do:
 It will be helpful if .rec files have intellisense support, formatting, coloring, and syntax errors check.

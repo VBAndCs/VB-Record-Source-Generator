@@ -11,7 +11,7 @@
   <PropertyGroup>
     <PackageId>Visual-Basic-Record-Generator</PackageId>
     <Title>VB.NET Record Source Generator</Title>
-    <PackageVersion>1.1.2.0</PackageVersion>
+    <PackageVersion>1.2.0.0</PackageVersion>
     <Authors>Mohammad Hamdy Ghanem</Authors>
     <PackageProjectUrl>https://github.com/VBAndCs/VB-Record-Source-Generator</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
@@ -20,17 +20,19 @@
 See the readme for more info about how to use the Record Generator and the record syntax.
       
 </Description>
-    <PackageReleaseNotes># Ver 1.1:
-- Sipports using Record key word instead of &lt;Record&gt; Class.
-- Supprts using Ky, ReadOnly (Or Immutable) and ReadOnly Key (Or Immutable Key)  as keywords instead of Attrs.
-- Supports using any ,net or user-defined attrs with the class it's properties.
-- Supports using ?, (), and type chars after the property name.
-- Enhanced ToString method to show nested records, and list elements. 
+    <PackageReleaseNotes># Ver 1.2:
+  - Using nullable params for ValueTypes, and using Optional(T) params with nullable types and ref types.
+# Ver 1.1:
+  - Supports using Record key word instead of &lt;Record&gt; Class.
+  - Supprts using Ky, ReadOnly (Or Immutable) and ReadOnly Key (Or Immutable Key)  as keywords instead of Attrs.
+  - Supports using any ,net or user-defined attrs with the class it's properties.
+  - Supports using ?, (), and type chars after the property name.
+  - Enhanced ToString method to show nested records, and list elements. 
 
 # Ver1.0: 
-- Supports writing methods as lampda expressions.
-- Supports Inheritance.
-- Supports type inference for properties with default Values.</PackageReleaseNotes>
+  - Supports writing methods as lampda expressions.
+  - Supports Inheritance.
+  - Supports type inference for properties with default Values.</PackageReleaseNotes>
     <PackageTags>VB.NET, Records, Source Generators</PackageTags>
     <NoPackageAnalysis>true</NoPackageAnalysis>
     <Version>1.1.1</Version>

@@ -35,7 +35,6 @@ Namespace RecordGeneratorTests
 
         End Function
 
-
         Function GetHash(sourceStr As String) As String
             Dim b = ASCIIEncoding.ASCII.GetBytes(sourceStr)
             Dim hash = New MD5CryptoServiceProvider().ComputeHash(b)
@@ -134,7 +133,7 @@ Public Class Person(
             For Each diag In result.Diagnostics
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
-            Assert.AreEqual(GetHash(result.Output), "887CA26CBCA0BDEBB9B821BBD497AFE7")
+            Assert.AreEqual(GetHash(result.Output), "F4936C31936D8A24FD11D3BB4D6782C2")
         End Sub
 
         <TestMethod>
@@ -154,21 +153,6 @@ Public Record Student(
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
             Assert.AreEqual(GetHash(result.Output), "85C5A7486FC88663E88388715DD7DBDA")
-        End Sub
-
-        <TestMethod>
-        Public Sub UniStudent()
-            Dim TestRecord = <![CDATA[<MyAttr>Public Class UniStudent(
-    University As String,
-    Collage As String,
-    Print = Function() $"{Name}, {University}, {Collage}"
-) Inherits Student]]>.Value
-            Dim result = GetGeneratedOutput(TestSourceCode, TestRecord)
-            For Each diag In result.Diagnostics
-                Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
-            Next
-            Assert.AreEqual(GetHash(result.Output), "238DCFCB9E7435E37542F6C650733EE5")
-
         End Sub
 
         <TestMethod>
@@ -199,6 +183,9 @@ Friend ReadOnly Class ROClass(A As Integer, B As Integer)
             For Each diag In result.Diagnostics
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
+
+            Assert.AreEqual(GetHash(result.Output), "23D3E71CA11B1B810AE87A4D7953EF2A")
+
         End Sub
 
         <TestMethod>
@@ -232,6 +219,9 @@ Public Record Student(
             For Each diag In result.Diagnostics
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
+
+            Assert.AreEqual(GetHash(result.Output), "D90CEF7EA08A0C3B98E36E682410EA4A")
+
         End Sub
 
         <TestMethod>
@@ -253,6 +243,36 @@ Public Class Book(
             For Each diag In result.Diagnostics
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
+
+            Assert.AreEqual(GetHash(result.Output), "BD0B74EF5A197005C806FAC65D8CC256")
+
+        End Sub
+
+        <TestMethod>
+        Public Sub TestValueTypes()
+            Dim TestRecord = <![CDATA[Structure TestValueTypes(
+    A = (1, "abc"),
+    B = new System.Collections.Generic.List(Of Byte)(),
+    C = Microsoft.VisualBasic.TriState.True,
+    D = new MyStruct(),
+    E As System.ValueTuple,
+    F As System.Collections.Generic.List(Of Byte),
+    G As Microsoft.VisualBasic.TriState,
+    H As MyStruct,
+    I As (Integer, String) = (1, "abc"),
+    J As System.Collections.Generic.List(Of Byte) = new System.Collections.Generic.List(Of Byte)(),
+    K  As Microsoft.VisualBasic.TriState = Microsoft.VisualBasic.TriState.True,
+    L  As MyStruct = new MyStruct(),
+    M As System.ValueTuple?,
+    N As Microsoft.VisualBasic.TriState?,
+    O As MyStruct?
+)]]>.Value
+            Dim result = GetGeneratedOutput(TestSourceCode, TestRecord)
+            For Each diag In result.Diagnostics
+                Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
+            Next
+
+            Assert.AreEqual(GetHash(result.Output), "044B6CEF56A03FDAB4A8A22746A66A4B")
 
         End Sub
 

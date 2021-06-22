@@ -39,6 +39,9 @@ Public Class Test
     Public Property [Date] As Date
 End Class
 
+Public Structure MyStruct
+    Public Property [Date] As Date
+End Structure
 
 Public Class MyAttrAttribute
     Inherits Attribute

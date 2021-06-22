@@ -21,4 +21,5 @@
     Public DefaultValue As String
     Friend LiteralDefVal As Boolean
     Friend Attrs As String
+    Friend IsValueType As Boolean
 End Structure

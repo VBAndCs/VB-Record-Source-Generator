@@ -366,6 +366,7 @@ Public Key Structure [Record](
 
     End Sub
 
+
     <TestMethod>
     Public Sub WriteTestEnum()
         Dim code = <![CDATA[(
@@ -479,7 +480,7 @@ Public Key Structure [Record](
         expected = <![CDATA[    Public Sub New(
                 Optional [iD] As Integer = 0,
                 Optional [name] As String = "",
-                Optional [address] As [Optional](Of (City As String, Street As String, No As Integer)) = Nothing
+                Optional [address] As (City As String, Street As String, No As Integer)? = Nothing
             )
 
         Me.ID = [iD]
@@ -502,7 +503,7 @@ Public Key Structure [Record](
         expected = <![CDATA[    Public Function [With](
                 Optional [iD] As Integer? = Nothing,
                 Optional [name] As [Optional](Of String) = Nothing,
-                Optional [address] As [Optional](Of (City As String, Street As String, No As Integer)) = Nothing
+                Optional [address] As (City As String, Street As String, No As Integer)? = Nothing
             ) As Person
 
         Return  New Person(
@@ -651,8 +652,244 @@ Public Key Structure [Record](
 
     End Sub
 
+    <TestMethod>
+    Public Sub WriteTestValueTyps()
+        Dim code = <![CDATA[(
+    A = (1, "abc"),
+    B = new System.Collections.Generic.List(Of Byte)(),
+    C = Microsoft.VisualBasic.TriState.True,
+    D = new MyStruct(),
+    E As System.ValueTuple,
+    F As System.Collections.Generic.List(Of Byte),
+    G As Microsoft.VisualBasic.TriState,
+    H As MyStruct,
+    I As (Integer, String) = (1, "abc"),
+    J As System.Collections.Generic.List(Of Byte) = new System.Collections.Generic.List(Of Byte)(),
+    K  As Microsoft.VisualBasic.TriState = Microsoft.VisualBasic.TriState.True,
+    L  As MyStruct = new MyStruct(),
+    M As System.ValueTuple?,
+    N As Microsoft.VisualBasic.TriState?,
+    O As MyStruct?
+)]]>.Value
+
+        Dim expected = <![CDATA[   <Key>
+   <DefaultValue("0= (1, __QUOTE__abc__QUOTE__)")>
+   Public Property [A] As (Integer, String)
+
+   <Key>
+   <DefaultValue("0= new System.Collections.Generic.List(Of Byte)()")>
+   Public Property [B] As System.Collections.Generic.List(Of Byte)
+
+   <Key>
+   <DefaultValue("1= Microsoft.VisualBasic.TriState.True")>
+   Public Property [C] As Microsoft.VisualBasic.TriState
+
+   <Key>
+   <DefaultValue("0= new MyStruct()")>
+   Public Property [D] As MyStruct
+
+   <Key>
+   Public Property [E] As System.ValueTuple
+
+   <Key>
+   Public Property [F] As System.Collections.Generic.List(Of Byte)
+
+   <Key>
+   Public Property [G] As Microsoft.VisualBasic.TriState
+
+   <Key>
+   Public Property [H] As MyStruct
+
+   <Key>
+   <DefaultValue("0= (1, __QUOTE__abc__QUOTE__)")>
+   Public Property [I] As (Integer, String)
+
+   <Key>
+   <DefaultValue("0= new System.Collections.Generic.List(Of Byte)()")>
+   Public Property [J] As System.Collections.Generic.List(Of Byte)
+
+   <Key>
+   <DefaultValue("1= Microsoft.VisualBasic.TriState.True")>
+   Public Property [K] As Microsoft.VisualBasic.TriState
+
+   <Key>
+   <DefaultValue("0= new MyStruct()")>
+   Public Property [L] As MyStruct
+
+   <Key>
+   <DefaultValue("0= Nothing")>
+   Public Property [M] As System.ValueTuple?
+
+   <Key>
+   <DefaultValue("0= Nothing")>
+   Public Property [N] As Microsoft.VisualBasic.TriState?
+
+   <Key>
+   <DefaultValue("0= Nothing")>
+   Public Property [O] As MyStruct?
 
 
+]]>.Value
+
+        Dim properties As New List(Of PropertyInfo)
+        Dim result = WriteProperties(code, properties, "").Replace(vbCrLf, vbLf)
+
+        Assert.AreEqual(result, expected)
+
+
+        expected = <![CDATA[    Public Sub New(
+                Optional [a] As (Integer, String)? = Nothing,
+                Optional [b] As [Optional](Of System.Collections.Generic.List(Of Byte)) = Nothing,
+                Optional [c] As Microsoft.VisualBasic.TriState = Microsoft.VisualBasic.TriState.True,
+                Optional [d] As MyStruct? = Nothing,
+                Optional [e] As System.ValueTuple? = Nothing,
+                Optional [f] As [Optional](Of System.Collections.Generic.List(Of Byte)) = Nothing,
+                Optional [g] As Microsoft.VisualBasic.TriState? = Nothing,
+                Optional [h] As MyStruct? = Nothing,
+                Optional [i] As (Integer, String)? = Nothing,
+                Optional [j] As [Optional](Of System.Collections.Generic.List(Of Byte)) = Nothing,
+                Optional [k] As Microsoft.VisualBasic.TriState = Microsoft.VisualBasic.TriState.True,
+                Optional [l] As MyStruct? = Nothing,
+                Optional [m] As [Optional](Of System.ValueTuple?) = Nothing,
+                Optional [n] As [Optional](Of Microsoft.VisualBasic.TriState?) = Nothing,
+                Optional [o] As [Optional](Of MyStruct?) = Nothing
+            )
+
+        If [a].HasValue
+            Me.A = [a].Value
+        Else
+            Me.A = (1, "abc")
+        End If
+
+        If [b].HasValue
+            Me.B = [b].Value
+        Else
+            Me.B = new System.Collections.Generic.List(Of Byte)()
+        End If
+
+        Me.C = [c]
+        If [d].HasValue
+            Me.D = [d].Value
+        Else
+            Me.D = new MyStruct()
+        End If
+
+        If [e].HasValue
+            Me.E = [e].Value
+        Else
+            Me.E = Nothing
+        End If
+
+        If [f].HasValue
+            Me.F = [f].Value
+        Else
+            Me.F = Nothing
+        End If
+
+        If [g].HasValue
+            Me.G = [g].Value
+        Else
+            Me.G = Nothing
+        End If
+
+        If [h].HasValue
+            Me.H = [h].Value
+        Else
+            Me.H = Nothing
+        End If
+
+        If [i].HasValue
+            Me.I = [i].Value
+        Else
+            Me.I = (1, "abc")
+        End If
+
+        If [j].HasValue
+            Me.J = [j].Value
+        Else
+            Me.J = new System.Collections.Generic.List(Of Byte)()
+        End If
+
+        Me.K = [k]
+        If [l].HasValue
+            Me.L = [l].Value
+        Else
+            Me.L = new MyStruct()
+        End If
+
+        If [m].HasValue
+            Me.M = [m].Value
+        Else
+            Me.M = Nothing
+        End If
+
+        If [n].HasValue
+            Me.N = [n].Value
+        Else
+            Me.N = Nothing
+        End If
+
+        If [o].HasValue
+            Me.O = [o].Value
+        Else
+            Me.O = Nothing
+        End If
+
+    End Sub
+
+]]>.Value
+
+        Dim sb As New StringBuilder
+        RecordParser.WriteConstructor(properties, sb)
+        result = sb.Replace(vbCrLf, vbLf).ToString()
+        Assert.AreEqual(result, expected)
+
+
+        expected = <![CDATA[    Public Function [With](
+                Optional [a] As (Integer, String)? = Nothing,
+                Optional [b] As [Optional](Of System.Collections.Generic.List(Of Byte)) = Nothing,
+                Optional [c] As Microsoft.VisualBasic.TriState? = Nothing,
+                Optional [d] As MyStruct? = Nothing,
+                Optional [e] As System.ValueTuple? = Nothing,
+                Optional [f] As [Optional](Of System.Collections.Generic.List(Of Byte)) = Nothing,
+                Optional [g] As Microsoft.VisualBasic.TriState? = Nothing,
+                Optional [h] As MyStruct? = Nothing,
+                Optional [i] As (Integer, String)? = Nothing,
+                Optional [j] As [Optional](Of System.Collections.Generic.List(Of Byte)) = Nothing,
+                Optional [k] As Microsoft.VisualBasic.TriState? = Nothing,
+                Optional [l] As MyStruct? = Nothing,
+                Optional [m] As [Optional](Of System.ValueTuple?) = Nothing,
+                Optional [n] As [Optional](Of Microsoft.VisualBasic.TriState?) = Nothing,
+                Optional [o] As [Optional](Of MyStruct?) = Nothing
+            ) As UniStudent
+
+        Return  New UniStudent(
+            If ([a].HasValue, [a].Value, Me.A),
+            If ([b].HasValue, [b].Value, Me.B),
+            If ([c].HasValue, [c].Value, Me.C),
+            If ([d].HasValue, [d].Value, Me.D),
+            If ([e].HasValue, [e].Value, Me.E),
+            If ([f].HasValue, [f].Value, Me.F),
+            If ([g].HasValue, [g].Value, Me.G),
+            If ([h].HasValue, [h].Value, Me.H),
+            If ([i].HasValue, [i].Value, Me.I),
+            If ([j].HasValue, [j].Value, Me.J),
+            If ([k].HasValue, [k].Value, Me.K),
+            If ([l].HasValue, [l].Value, Me.L),
+            If ([m].HasValue, [m].Value, Me.M),
+            If ([n].HasValue, [n].Value, Me.N),
+            If ([o].HasValue, [o].Value, Me.O)
+        )
+    End Function
+
+]]>.Value
+
+        sb.Clear()
+        RecordParser.WriteWith("UniStudent", "", properties, sb)
+        result = sb.Replace(vbCrLf, vbLf).ToString()
+        Assert.AreEqual(result, expected)
+
+    End Sub
 
     Function WriteProperties(code As String, properties As List(Of PropertyInfo), Optional inheritance As String = "", Optional importsList As StringBuilder = Nothing) As String
 

@@ -10,6 +10,7 @@
     <None Remove="Author.rec" />
     <None Remove="CoolRecords.rec" />
     <None Remove="TestEnums.rec" />
+    <None Remove="TestValueTypes.rec" />
   </ItemGroup>
 
 
@@ -17,6 +18,7 @@
     <ProjectReference Include="..\RecordGenerator\RecordGenerator.vbproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <AdditionalFiles Include="Author.rec" />
     <AdditionalFiles Include="CoolRecords.rec" />
+    <AdditionalFiles Include="TestValueTypes.rec" />
     <AdditionalFiles Include="TestEnums.rec" />
     <AdditionalFiles Include="Student.rec" />
   </ItemGroup>

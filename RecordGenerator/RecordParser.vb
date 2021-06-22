@@ -129,8 +129,8 @@ Public Class RecordParser
     End Function
 
     Public Shared Sub Parse(context? As GeneratorExecutionContext, code As String)
-        Dim tokens = SyntaxFactory.ParseTokens(code).ToArray
 
+        Dim tokens = SyntaxFactory.ParseTokens(code).ToArray
 
         ' Skip until class/structure token
         Dim st = 0
@@ -357,6 +357,8 @@ $"    Public {MethodType} { param.Identifier}{Header.ParameterList} {AsClause}
             typeOfChar = TypeChars(c)
         End If
 
+        prop.Name = prop.Name.Trim("["c, "]"c)
+
         ' I allow ti use multiple symbols after the identifier
         If id.Nullable.Text = "?" Then
             belongsToType = "?"
@@ -417,6 +419,7 @@ $"    Public {MethodType} { param.Identifier}{Header.ParameterList} {AsClause}
                 Dim result = InferType(inheritance, methods, properties, "= Function() " & prop.DefaultValue.Substring(1))
                 prop.LiteralDefVal = prop.LiteralDefVal OrElse result.IsConst
                 If prop.Type = "" Then prop.Type = result.Type
+                prop.IsValueType = result.IsValueType
             End If
         End If
 
@@ -424,24 +427,61 @@ $"    Public {MethodType} { param.Identifier}{Header.ParameterList} {AsClause}
         properties.Add(prop)
     End Sub
 
+    Private Shared Function IsValueType(type As String) As Boolean
+
+        Dim code = $"
+Class Test_00000000000002
+    Sub Foo
+        Dim a {type}
+    End Sub
+End Class
+"
+
+        Dim syntaxTree = SyntaxFactory.ParseSyntaxTree(code)
+        Dim comp = CurrentCompilation.AddSyntaxTrees(syntaxTree)
+        Dim sem = comp.GetSemanticModel(syntaxTree)
+        Dim variableDeclaration = syntaxTree.GetRoot().DescendantNodes().OfType(Of LocalDeclarationStatementSyntax)().First
+
+        Try
+            Dim typeSymbol = CType(sem.GetDeclaredSymbol(variableDeclaration.Declarators(0).Names(0)), ILocalSymbol).Type
+            Return typeSymbol.IsValueType
+        Catch
+
+        End Try
+
+        Return False
+
+    End Function
+
     Private Shared Sub SetDefValue(ByRef prop As PropertyInfo)
         Dim t = prop.Type.Substring(2).Trim()
         Select Case t.Trim("?"c).ToLower()
             Case "byte", "sbyte", "short", "ushort", "integer", "uinteger", "long", "ulong", "single", "double", "decimal"
                 prop.LiteralDefVal = True
                 prop.DefaultValue = "= 0"
+                prop.IsValueType = True
             Case "boolean"
                 prop.LiteralDefVal = True
                 prop.DefaultValue = "= False"
+                prop.IsValueType = True
             Case "char"
                 prop.LiteralDefVal = True
                 prop.DefaultValue = "= vbNullChar"
+                prop.IsValueType = True
             Case "string"
                 prop.LiteralDefVal = True
                 prop.DefaultValue = "= """""
+                prop.IsValueType = False
             Case "date", "datetime"
                 prop.LiteralDefVal = True
                 prop.DefaultValue = "= #1/1/0001#"
+                prop.IsValueType = True
+            Case Else
+                If t.StartsWith("(") Then
+                    prop.IsValueType = True
+                Else
+                    prop.IsValueType = IsValueType(prop.Type)
+                End If
         End Select
         If t.EndsWith("?") Then prop.DefaultValue = "= Nothing"
     End Sub
@@ -485,7 +525,11 @@ $"    Public {MethodType} { param.Identifier}{Header.ParameterList} {AsClause}
                 params.Append($"                Optional [{p.camelCaseName}] As {p.Type} {p.DefaultValue}")
                 body.AppendLine($"        Me.{p.Name} = [{p.camelCaseName}]")
             Else
-                params.Append($"                Optional [{p.camelCaseName}] As [Optional](Of {p.Type}) = Nothing")
+                If p.IsValueType AndAlso Not p.Type.EndsWith("?") Then ' Can use Nullable
+                    params.Append($"                Optional [{p.camelCaseName}] As {p.Type}? = Nothing")
+                Else
+                    params.Append($"                Optional [{p.camelCaseName}] As [Optional](Of {p.Type}) = Nothing")
+                End If
                 body.AppendLine(
 $"        If [{p.camelCaseName}].HasValue
             Me.{p.Name} = [{p.camelCaseName}].Value
@@ -636,9 +680,8 @@ $"    Public Function Clone() As {className}{typeParams}
                 addSep = True
             End If
 
-            If p.LiteralDefVal AndAlso p.Type.ToLower() <> "string" Then
-                Dim type = If(p.Type.EndsWith("?"), $"[Optional](Of {p.Type})", p.Type & "?")
-                params.Append($"                Optional [{p.camelCaseName}] As {type} = Nothing")
+            If p.IsValueType AndAlso Not p.Type.EndsWith("?") Then
+                params.Append($"                Optional [{p.camelCaseName}] As {p.Type}? = Nothing")
             Else
                 params.Append($"                Optional [{p.camelCaseName}] As [Optional](Of {p.Type}) = Nothing")
             End If
@@ -717,7 +760,7 @@ End Class
                                      methods As List(Of String),
                                      properties As List(Of PropertyInfo),
                                      defaultValue As String
-                         ) As (IsConst As Boolean, Type As String)
+                         ) As (IsConst As Boolean, Type As String, IsValueType As Boolean)
 
         Dim code = $"
 {importsList}
@@ -747,13 +790,17 @@ End Class
 
         Try
             Dim typeSymbol = CType(CType(sem.GetDeclaredSymbol(variableDeclaration.ChildNodes(0).ChildNodes(0)), ILocalSymbol).Type, INamedTypeSymbol).DelegateInvokeMethod.ReturnType
-            If typeSymbol Is Nothing Then Return (isConst, "As Object")
+            If typeSymbol Is Nothing Then Return (isConst, "As Object", False)
             Dim typeName = typeSymbol.ToDisplayString()
-            Return (isConst, "As " & If(typeName = "?" OrElse typeName.StartsWith("<anonymous type: "), "Object", typeName))
+            Return (
+                            isConst,
+                            "As " & If(typeName = "?" OrElse typeName.StartsWith("<anonymous type: "), "Object", typeName),
+                            typeSymbol.IsValueType
+                       )
         Catch
         End Try
 
-        Return (isConst, "As Object")
+        Return (isConst, "As Object", False)
 
     End Function
 
