@@ -46,6 +46,14 @@ Namespace RecordGeneratorTests
         End Function
 
         <TestMethod>
+        Public Sub Nameless()
+            Dim TestRecord = <![CDATA[Public Record (Name ="", Value = 0.0)]]>.Value
+            Dim result = GetGeneratedOutput(TestSourceCode, TestRecord)
+            ' Must Fail
+            Assert.AreEqual(result.Diagnostics(0).Id, "BC42502", result.Diagnostics(0).ToString())
+        End Sub
+
+        <TestMethod>
         Public Sub NameValue()
             Dim TestRecord = <![CDATA[Public Record NameValue(Name ="", Value = 0.0)]]>.Value
             Dim result = GetGeneratedOutput(TestSourceCode, TestRecord)

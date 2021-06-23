@@ -60,7 +60,7 @@ Public Class RecordParser
                     Dim B4PrevToken = If(i < 2, "", tokens(i - 2).Text).ToLower()
                     If (PrevToken = "readonly" OrElse PrevToken = "immitable") AndAlso B4PrevToken <> "[" AndAlso B4PrevToken <> "<" Then
                         Dim st = If(i = 0, 0, tokens(i - 1).SpanStart)
-                        sb.Remove(st, tokens(i).Span.End - st + 1)
+                        sb.Remove(st, Math.Min(tokens(i).Span.End + 1, sb.Length) - st)
                         st = GetStartOfLineIfClassHeader(st, i, tokens)
                         sb.Insert(st, "<ReadOnlyKey>")
                         ' Skip ReadOnly
@@ -68,7 +68,7 @@ Public Class RecordParser
                         PrevToken = B4PrevToken
                     ElseIf PrevToken <> "[" AndAlso PrevToken <> "<" Then
                         Dim st = tokens(i).SpanStart
-                        sb.Remove(st, tokens(i).Span.End - st + 1)
+                        sb.Remove(st, Math.Min(tokens(i).Span.End + 1, sb.Length) - st)
                         st = GetStartOfLineIfClassHeader(st, i, tokens)
                         sb.Insert(st, "<Key>")
                     End If
@@ -76,7 +76,7 @@ Public Class RecordParser
                 Case "readonly", "immutable"
                     If PrevToken <> "[" AndAlso PrevToken <> "<" Then
                         Dim st = tokens(i).SpanStart
-                        sb.Remove(st, tokens(i).Span.End - st + 1)
+                        sb.Remove(st, Math.Min(tokens(i).Span.End + 1, sb.Length) - st)
                         st = GetStartOfLineIfClassHeader(st, i, tokens)
                         sb.Insert(st, "<ReadOnly>")
                     End If
@@ -84,7 +84,7 @@ Public Class RecordParser
                 Case "readonlykey", "immutablekey"
                     If PrevToken <> "[" AndAlso PrevToken <> "<" Then
                         Dim st = tokens(i).SpanStart
-                        sb.Remove(st, tokens(i).Span.End - st + 1)
+                        sb.Remove(st, Math.Min(tokens(i).Span.End + 1, sb.Length) - st)
                         st = GetStartOfLineIfClassHeader(st, i, tokens)
                         sb.Insert(st, "<ReadOnlyKey>")
                     End If
@@ -92,7 +92,7 @@ Public Class RecordParser
                 Case "record"
                     If isClassHeader AndAlso PrevToken <> "[" AndAlso PrevToken <> "<" Then
                         Dim st = tokens(i).SpanStart
-                        sb.Remove(st, tokens(i).Span.End - st + 1)
+                        sb.Remove(st, Math.Min(tokens(i).Span.End + 1, sb.Length) - st)
                         sb.Insert(st, "Class ")
                         sb.Insert(0, "<Record>")
                         Exit For
@@ -224,6 +224,10 @@ Public Class RecordParser
         End If
 
         Dim className = result.First.ToString()
+        If className = "" Then
+            Throw New Exception("This record doesn't have a name:" & vbCrLf & definition)
+        End If
+
         Dim typeParams = ""
         Dim typeParamLists = classStatement.ChildNodes.OfType(Of TypeParameterListSyntax)
         If typeParamLists.Any Then
@@ -402,7 +406,7 @@ $"    Public {MethodType} { param.Identifier}{Header.ParameterList} {AsClause}
         prop.IsKey = prop.IsKey Or DefaultPropInfo.IsKey
 
         prop.Type = If(param.AsClause?.ToString(), typeOfChar)
-
+        If prop.Type <> "" AndAlso prop.Type.Trim().Length < 4 Then prop.Type = "As Object"
         If belongsToType <> "" AndAlso Not prop.Type.EndsWith(belongsToType) Then prop.Type = prop.Type & belongsToType
 
         prop.DefaultValue = param.Default?.ToString()

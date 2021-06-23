@@ -1,3 +1,5 @@
+![Untitled](https://user-images.githubusercontent.com/48354902/122991838-c8fcb000-d3a5-11eb-98de-46e853a21272.png)
+
 # VB Record Source Generator
 An amazing new feature called `Source Generators` has been added to VB.NET since VS.NET 16.9. It allows you to write code to generate another code that is added to your project in compilation time. 
 You can combine this feature with the Roslyn compiler powerful tools (like SyntaxFacyoty, SyntaxTree and SemanticModel) to parse, compile and analyze VB syntax and generate any additional code you want. As an application of these concepts, I created a syntax for VB Records (quite similar to C# records). It consists of a `Class/Structure declaration` followed by a `parameter list`, followed by an optional `Inherits statement`. You can also add Imports statements at top of the file. 

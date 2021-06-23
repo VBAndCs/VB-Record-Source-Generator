@@ -9,7 +9,7 @@ Module Helper
 
         Dim syntaxTree = VisualBasicSyntaxTree.ParseText(source)
 
-        Dim references As List(Of MetadataReference) = New List(Of MetadataReference)
+        Dim references = New List(Of MetadataReference)
         Dim assemblies As Assembly() = AppDomain.CurrentDomain.GetAssemblies()
         For Each assembly As Assembly In assemblies
             If Not assembly.IsDynamic Then
