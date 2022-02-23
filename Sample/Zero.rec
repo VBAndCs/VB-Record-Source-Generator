@@ -27,3 +27,13 @@ Public Class TestImplementaion(
 Record Msg(
    ShowMsg = Sub() Console.WriteLine("Hello World!")
 )
+
+ReadOnly Key Structure KeyValueStruct(Of T1, T2)(
+    Key As T1,
+    Value As T2
+)
+
+Record KeyValueClass(Of T1, T2)(
+    Key As T1,
+    Value As T2
+)

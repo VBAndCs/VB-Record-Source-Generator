@@ -27,3 +27,4 @@ F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\bin\Debug\net6.0\Sample.dll
 F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\bin\Debug\net6.0\ref\Sample.dll
 F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\bin\Debug\net6.0\Sample.pdb
 F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Debug\net6.0\Sample.genruntimeconfig.cache
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Debug\net6.0\Sample.vbproj.AssemblyReference.cache

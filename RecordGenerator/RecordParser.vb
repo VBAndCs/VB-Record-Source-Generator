@@ -439,7 +439,7 @@ Option Compare Binary
             WriteWithProps(className, typeParams, Properties, record)
             WriteClone(className, typeParams, record)
             WriteToString(className, Properties, record)
-            WriteEquals(className, typeParams, Properties, record)
+            WriteEquals(className, typeParams, Properties, record, isClass)
             WriteEqualityOps(className, typeParams, record)
             WriteTuplesOps(className, typeParams, Properties, record)
         End If
@@ -889,20 +889,21 @@ $"    Public Shared Operator =(FirstRecord As {className}{typeParams}, secondRec
         record.AppendLine()
     End Sub
 
-    Public Shared Sub WriteEquals(className As String, typeParams As String, Properties As List(Of PropertyInfo), record As StringBuilder)
+    Public Shared Sub WriteEquals(className As String, typeParams As String, Properties As List(Of PropertyInfo), record As StringBuilder, isClass As Boolean)
         Dim keys = From p In Properties
                    Where p.IsKey
 
         If keys.Any Then
             record.AppendLine(
- $"    Public Overrides Function Equals(anotherObject) As Boolean
-            Dim anotherRecord = TryCast(anotherObject, {className}{typeParams})
-            If anotherRecord Is Nothing Then Return False
+ $"    Public Overrides Function Equals(anotherObject As Object) As Boolean            
+            If TypeOf anotherObject IsNot {className}{typeParams} Then Return False
+            Dim anotherRecord = CType(anotherObject, {className}{typeParams})
             Return Equals(anotherRecord)
     End Function")
             record.AppendLine()
 
             record.AppendLine($"    Public Overloads Function Equals(anotherRecord As {className}{typeParams}) As Boolean")
+            If isClass Then record.AppendLine($"        If anotherRecord.GetType IsNot Me.GetType() Then Return False")
             For Each p In keys
                 record.AppendLine($"        If Not _{p.Name}.Equals(anotherRecord._{p.Name}) Then Return False")
             Next
