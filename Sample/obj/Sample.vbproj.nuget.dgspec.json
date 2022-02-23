@@ -1,0 +1,62 @@
+{
+  "format": 1,
+  "restore": {
+    "F:\\_VS.NET\\_برامجي\\SGs\\RecordGenerator\\Sample\\Sample.vbproj": {}
+  },
+  "projects": {
+    "F:\\_VS.NET\\_برامجي\\SGs\\RecordGenerator\\Sample\\Sample.vbproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "F:\\_VS.NET\\_برامجي\\SGs\\RecordGenerator\\Sample\\Sample.vbproj",
+        "projectName": "Sample",
+        "projectPath": "F:\\_VS.NET\\_برامجي\\SGs\\RecordGenerator\\Sample\\Sample.vbproj",
+        "packagesPath": "C:\\Users\\MHG\\.nuget\\packages\\",
+        "outputPath": "F:\\_VS.NET\\_برامجي\\SGs\\RecordGenerator\\Sample\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\MHG\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net6.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {},
+          "https://dotnet.myget.org/F/roslyn/api/v3/index.json": {}
+        },
+        "frameworks": {
+          "net6.0": {
+            "targetAlias": "net6.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net6.0": {
+          "targetAlias": "net6.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.101\\RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

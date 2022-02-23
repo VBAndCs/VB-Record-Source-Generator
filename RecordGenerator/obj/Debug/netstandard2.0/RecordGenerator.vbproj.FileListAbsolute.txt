@@ -1,0 +1,20 @@
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\bin\Debug\netstandard2.0\RecordGenerator.deps.json
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\bin\Debug\netstandard2.0\RecordGenerator.dll
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\bin\Debug\netstandard2.0\RecordGenerator.pdb
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Debug\netstandard2.0\RecordGenerator.GeneratedMSBuildEditorConfig.editorconfig
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Debug\netstandard2.0\RecordGenerator.AssemblyInfoInputs.cache
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Debug\netstandard2.0\RecordGenerator.AssemblyInfo.vb
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Debug\netstandard2.0\RecordGenerator.vbproj.CoreCompileInputs.cache
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Debug\netstandard2.0\RecordGenerator.dll
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Debug\netstandard2.0\RecordGenerator.pdb
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Debug\netstandard2.0\RecordGenerator.vbproj.AssemblyReference.cache
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\bin\Debug\netstandard2.0\RecordGenerator.deps.json
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\bin\Debug\netstandard2.0\RecordGenerator.dll
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\bin\Debug\netstandard2.0\RecordGenerator.pdb
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Debug\netstandard2.0\RecordGenerator.GeneratedMSBuildEditorConfig.editorconfig
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Debug\netstandard2.0\RecordGenerator.AssemblyInfoInputs.cache
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Debug\netstandard2.0\RecordGenerator.AssemblyInfo.vb
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Debug\netstandard2.0\RecordGenerator.vbproj.CoreCompileInputs.cache
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Debug\netstandard2.0\RecordGenerator.dll
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Debug\netstandard2.0\RecordGenerator.pdb
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Debug\netstandard2.0\RecordGenerator.vbproj.AssemblyReference.cache

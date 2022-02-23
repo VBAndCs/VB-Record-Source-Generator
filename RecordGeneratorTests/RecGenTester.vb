@@ -1,7 +1,4 @@
-﻿Option Explicit On
-Option Strict On
-Option Infer On
-
+﻿
 Imports System.Collections.Immutable
 Imports System.Reflection
 Imports System.Security.Cryptography
@@ -18,7 +15,7 @@ Namespace RecordGeneratorTests
 
             Dim compilation = GetCompilation(source)
 
-            Dim generator1 As ISourceGenerator = New RecordGenerator.RecordGenerator()
+            Dim generator1 As ISourceGenerator = New RecordGenerator.RecGen()
 
             Dim iaGenerator = {generator1}.ToImmutableArray
 
@@ -36,7 +33,7 @@ Namespace RecordGeneratorTests
         End Function
 
         Function GetHash(sourceStr As String) As String
-            Dim b = ASCIIEncoding.ASCII.GetBytes(sourceStr)
+            Dim b = Encoding.ASCII.GetBytes(sourceStr)
             Dim hash = New MD5CryptoServiceProvider().ComputeHash(b)
             Dim sb As New StringBuilder(hash.Length)
             For i = 0 To hash.Length - 1
@@ -44,6 +41,120 @@ Namespace RecordGeneratorTests
             Next
             Return sb.ToString()
         End Function
+
+        <TestMethod>
+        Public Sub SB()
+            Dim TestRecord = <![CDATA[
+Imports System.Text
+Record TestSB(SB As StringBuilder)
+]]>.Value
+
+            Dim result = GetGeneratedOutput(TestSourceCode, TestRecord)
+            For Each diag In result.Diagnostics
+                Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
+            Next
+            Assert.AreEqual(GetHash(result.Output), "F32F7CDCC5555D85878C33DA12615269")
+        End Sub
+
+        <TestMethod>
+        Public Sub XMLComments()
+            Dim TestRecord = <![CDATA[
+''' <summary>
+''' Person record type
+''' </summary>
+''' <param name="FirstName">First Name</param>
+''' <param name="LastName">Last Name</param>
+''' <remarks>
+''' The person type is a positional record containing the
+''' properties for the first and last names.
+''' </remarks>
+Public Record Test(
+    FirstName$,
+    LastName$
+)
+]]>.Value
+
+            Dim result = GetGeneratedOutput(TestSourceCode, TestRecord)
+            For Each diag In result.Diagnostics
+                Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
+            Next
+            Assert.AreEqual(GetHash(result.Output), "4D586F5D0EBA04910436FAD4BB8D39F0")
+        End Sub
+
+        <TestMethod>
+        Public Sub ImpInterface()
+            Dim TestRecord = <![CDATA[
+Record Test(
+    Name$,
+    Pos As (X%, Y%),
+    Age%,
+    Move = Sub(x%) _Pos.X = x,
+    Move = Function(x%, y%) 
+                       _Pos = (x, y)
+                       Return True
+                  End Function,
+    GetText = Function(name$) "Hello " & name,
+    GetText = Function( ) "Hello",
+    Concat = Function(x$, y$) x & y,
+    Concat = Fn(x$, y$, n%) => x & y & n.ToString()
+) Implements ITest(Of Integer) , Inherits DateInfo
+]]>.Value
+
+            Dim result = GetGeneratedOutput(TestSourceCode, TestRecord)
+            For Each diag In result.Diagnostics
+                Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
+            Next
+            Assert.AreEqual(GetHash(result.Output), "364633B62E23ECB43560D74ACCD72A3C")
+        End Sub
+
+        <TestMethod>
+        Public Sub Lists()
+            Dim TestRecord = <![CDATA[
+Record Test(
+    A As List(Of Byte),
+    B As List(Of Byte) = New List(Of Byte)(),
+    C = New List(Of Byte)(),
+    D As New List(Of Byte) From {1, 2, 3}
+)
+]]>.Value
+
+            Dim result = GetGeneratedOutput(TestSourceCode, TestRecord)
+            For Each diag In result.Diagnostics
+                Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
+            Next
+            Assert.AreEqual(GetHash(result.Output), "8693C1959E637740DA20C0C953EA0A5C")
+        End Sub
+
+
+        <TestMethod>
+        Public Sub PropertyLess()
+            Dim TestRecord = <![CDATA[
+  
+   Namespace MyApp.Tests
+
+Class Zero()
+]]>.Value
+            Dim result = GetGeneratedOutput(TestSourceCode, TestRecord)
+            For Each diag In result.Diagnostics
+                Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
+            Next
+            Assert.AreEqual(GetHash(result.Output), "4D79620A60F86AC4E76D626C2C685C12")
+        End Sub
+
+        <TestMethod>
+        Public Sub AsNew()
+            Dim TestRecord = <![CDATA[
+Public Record Test(Of T1 As New, T2 As New)(
+      Items As New List(Of Integer)
+)
+]]>.Value
+            Dim result = GetGeneratedOutput(TestSourceCode, TestRecord)
+            For Each diag In result.Diagnostics
+                Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
+            Next
+            Assert.AreEqual(GetHash(result.Output), "0EE681E6FCE930FF2675BBE0A10A8970")
+        End Sub
+
 
         <TestMethod>
         Public Sub Nameless()
@@ -141,12 +252,19 @@ Public Class Person(
             For Each diag In result.Diagnostics
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
-            Assert.AreEqual(GetHash(result.Output), "F4936C31936D8A24FD11D3BB4D6782C2")
+            Assert.AreEqual(GetHash(result.Output), "9A15CC9284CE0B1EE3C382F59755DDFA")
         End Sub
 
         <TestMethod>
         Public Sub Student()
-            Dim TestRecord = <![CDATA[<MyAttr>
+            Dim TestRecord = <![CDATA[
+Public Record Human(
+	ID = 0, 
+	Name = "", 
+    Address As (City$, Street$, No%)
+) Inherits DateInfo
+
+<MyAttr>
 Public Record Student(
     Name As String,
     ClassRoom = 0,
@@ -154,13 +272,13 @@ Public Record Student(
     Print = Function()
                      return Name & Grades
                 End Function
-) Inherits Person
+) Inherits Human
 ]]>.Value
             Dim result = GetGeneratedOutput(TestSourceCode, TestRecord)
             For Each diag In result.Diagnostics
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
-            Assert.AreEqual(GetHash(result.Output), "85C5A7486FC88663E88388715DD7DBDA")
+            Assert.AreEqual(GetHash(result.Output), "C444D0FB2A09413B7298CA531D708114")
         End Sub
 
         <TestMethod>
@@ -175,7 +293,7 @@ Public Class TestEnums(
             For Each diag In result.Diagnostics
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
-            Assert.AreEqual(GetHash(result.Output), "868ADB786CA37DDB75B281A9B231DA68")
+            Assert.AreEqual(GetHash(result.Output), "049409585AB16F64E8E2C41387FB8C08")
         End Sub
 
         <TestMethod>
@@ -228,7 +346,7 @@ Public Record Student(
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
 
-            Assert.AreEqual(GetHash(result.Output), "D90CEF7EA08A0C3B98E36E682410EA4A")
+            Assert.AreEqual(GetHash(result.Output), "39340A9FACC31B27029A47137C660244")
 
         End Sub
 
@@ -258,32 +376,39 @@ Public Class Book(
 
         <TestMethod>
         Public Sub TestValueTypes()
-            Dim TestRecord = <![CDATA[Structure TestValueTypes(
-    A = (1, "abc"),
-    B = new System.Collections.Generic.List(Of Byte)(),
-    C = Microsoft.VisualBasic.TriState.True,
-    D = new MyStruct(),
-    E As System.ValueTuple,
-    F As System.Collections.Generic.List(Of Byte),
-    G As Microsoft.VisualBasic.TriState,
-    H As MyStruct,
-    I As (Integer, String) = (1, "abc"),
-    J As System.Collections.Generic.List(Of Byte) = new System.Collections.Generic.List(Of Byte)(),
-    K  As Microsoft.VisualBasic.TriState = Microsoft.VisualBasic.TriState.True,
-    L  As MyStruct = new MyStruct(),
-    M As System.ValueTuple?,
-    N As Microsoft.VisualBasic.TriState?,
-    O As MyStruct?
-)]]>.Value
+            Dim TestRecord = <![CDATA[
+Imports Microsoft.VisualBasic
+
+Record TestStructs(
+    A As MyStruct,
+    B As MyStruct?,
+    C  As MyStruct = new MyStruct(),
+    D = New MyStruct() With {.Value = 1}
+)
+
+Record TestEums(
+    A As TriState,
+    B As TriState?,
+    C = TriState.True,
+    D  As TriState = TriState.True,
+)
+
+Record TestTuples(
+    A As System.ValueTuple,
+    B As System.ValueTuple?,
+    C As (Integer, String) = (1, "abc"),
+    D = (1, "abc"),
+    E = (ID:= 1, Value:= "abc")
+)
+]]>.Value
             Dim result = GetGeneratedOutput(TestSourceCode, TestRecord)
             For Each diag In result.Diagnostics
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
 
-            Assert.AreEqual(GetHash(result.Output), "044B6CEF56A03FDAB4A8A22746A66A4B")
+            Assert.AreEqual(GetHash(result.Output), "02CD51357CD42ABEF09809F0AD07E19B")
 
         End Sub
 
     End Class
-
 End Namespace

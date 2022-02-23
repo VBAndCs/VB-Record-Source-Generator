@@ -1,0 +1,29 @@
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Debug\net6.0\Sample.GeneratedMSBuildEditorConfig.editorconfig
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Debug\net6.0\Sample.AssemblyInfoInputs.cache
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Debug\net6.0\Sample.AssemblyInfo.vb
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Debug\net6.0\Sample.vbproj.CoreCompileInputs.cache
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\bin\Debug\net6.0\Sample.exe
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\bin\Debug\net6.0\Sample.deps.json
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\bin\Debug\net6.0\Sample.runtimeconfig.json
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\bin\Debug\net6.0\Sample.dll
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\bin\Debug\net6.0\ref\Sample.dll
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\bin\Debug\net6.0\Sample.pdb
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Debug\net6.0\Sample.dll
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Debug\net6.0\ref\Sample.dll
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Debug\net6.0\Sample.pdb
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Debug\net6.0\Sample.genruntimeconfig.cache
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Debug\net6.0\Sample.vbproj.AssemblyReference.cache
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Debug\net6.0\Sample.GeneratedMSBuildEditorConfig.editorconfig
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Debug\net6.0\Sample.AssemblyInfoInputs.cache
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Debug\net6.0\Sample.AssemblyInfo.vb
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Debug\net6.0\Sample.vbproj.CoreCompileInputs.cache
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Debug\net6.0\Sample.dll
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Debug\net6.0\ref\Sample.dll
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Debug\net6.0\Sample.pdb
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\bin\Debug\net6.0\Sample.exe
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\bin\Debug\net6.0\Sample.deps.json
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\bin\Debug\net6.0\Sample.runtimeconfig.json
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\bin\Debug\net6.0\Sample.dll
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\bin\Debug\net6.0\ref\Sample.dll
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\bin\Debug\net6.0\Sample.pdb
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Debug\net6.0\Sample.genruntimeconfig.cache

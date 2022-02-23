@@ -1,0 +1,7 @@
+﻿
+Public Class TestValues(
+    State = TriState.False,
+    List = new List(Of Integer),
+    Value = MyValue,
+    [Date] As Date
+ )

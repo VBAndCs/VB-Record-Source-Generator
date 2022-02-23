@@ -1,0 +1,15 @@
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Release\net6.0\Sample.GeneratedMSBuildEditorConfig.editorconfig
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Release\net6.0\Sample.AssemblyInfoInputs.cache
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Release\net6.0\Sample.AssemblyInfo.vb
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Release\net6.0\Sample.vbproj.CoreCompileInputs.cache
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\bin\Release\net6.0\Sample.exe
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\bin\Release\net6.0\Sample.deps.json
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\bin\Release\net6.0\Sample.runtimeconfig.json
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\bin\Release\net6.0\Sample.dll
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\bin\Release\net6.0\ref\Sample.dll
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\bin\Release\net6.0\Sample.pdb
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Release\net6.0\Sample.dll
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Release\net6.0\ref\Sample.dll
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Release\net6.0\Sample.pdb
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Release\net6.0\Sample.genruntimeconfig.cache
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\Sample\obj\Release\net6.0\Sample.vbproj.AssemblyReference.cache

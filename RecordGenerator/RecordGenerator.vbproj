@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <RootNamespace>RecordGenerator</RootNamespace>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -11,7 +10,7 @@
   <PropertyGroup>
     <PackageId>Visual-Basic-Record-Generator</PackageId>
     <Title>VB.NET Record Source Generator</Title>
-    <PackageVersion>1.2.1.0</PackageVersion>
+    <PackageVersion>2.0.0.0</PackageVersion>
     <Authors>Mohammad Hamdy Ghanem</Authors>
     <PackageProjectUrl>https://github.com/VBAndCs/VB-Record-Source-Generator</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
@@ -20,10 +19,18 @@
 See the readme for more info about how to use the Record Generator and the record syntax.
       
 </Description>
-    <PackageReleaseNotes># Ver 1.2:
-  - Using nullable params for ValueTypes, and using Optional(T) params with nullable types and ref types.
-# Ver 1.1:
-  - Supports using Record key word instead of &lt;Record&gt; Class.
+    <PackageReleaseNotes>
+		# Ver 2.0:
+		- Allow to declare a namespace for the records
+		- Allow record to implement Interfaces.
+		- Allow property-less records.
+		- Allow `As new` expression in property definition.
+		- Records now are aware of some default imported namespaces, like Sytem, System.Collections.Generic, and Microsoft.VisualBasic, so, you don't need to import them.
+
+		# Ver 1.2:
+		- Using nullable params for ValueTypes, and using Optional(T) params with nullable types and ref types.
+		# Ver 1.1:
+		- Supports using Record key word instead of &lt;Record&gt; Class.
   - Supprts using Ky, ReadOnly (Or Immutable) and ReadOnly Key (Or Immutable Key)  as keywords instead of Attrs.
   - Supports using any ,net or user-defined attrs with the class it's properties.
   - Supports using ?, (), and type chars after the property name.
@@ -35,12 +42,12 @@ See the readme for more info about how to use the Record Generator and the recor
   - Supports type inference for properties with default Values.</PackageReleaseNotes>
     <PackageTags>VB.NET, Records, Source Generators</PackageTags>
     <NoPackageAnalysis>true</NoPackageAnalysis>
-    <Version>1.1.1</Version>
+    <Version>2.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="3.9.0-2.final" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.2" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="3.9.0-2.final"/>
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.2"  />
     <PackageReference Update="NETStandard.Library" PrivateAssets="all" />
   </ItemGroup>
 

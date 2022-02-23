@@ -3,23 +3,22 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <RootNamespace>Sample</RootNamespace>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Author.rec" />
-    <None Remove="CoolRecords.rec" />
-    <None Remove="TestEnums.rec" />
-    <None Remove="TestValueTypes.rec" />
+    <None Remove="Records.rec" />
+    <None Remove="Zero.rec" />
   </ItemGroup>
-
 
   <ItemGroup>
     <ProjectReference Include="..\RecordGenerator\RecordGenerator.vbproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <AdditionalFiles Include="Author.rec" />
     <AdditionalFiles Include="CoolRecords.rec" />
-    <AdditionalFiles Include="TestValueTypes.rec" />
-    <AdditionalFiles Include="TestEnums.rec" />
+    <AdditionalFiles Include="Records.rec" />
+    <AdditionalFiles Include="Zero.rec" />
+    <AdditionalFiles Include="TestTypes.rec" />
+    <AdditionalFiles Include="TestValues.rec" />
     <AdditionalFiles Include="Student.rec" />
   </ItemGroup>
 </Project>

@@ -13,7 +13,10 @@ Module Program
         Console.WriteLine(auth1)
 
 
-        Dim Adam As New Student(Now, 1, "Adam", ("New Yourk", "Hello St.", 10), 3, 80.5)
+        Dim Adam As New Student(
+            Now, 1, "Adam",
+            ("New Yourk", "Hello St.", 10),
+            3, 80.5)
         Console.WriteLine(Adam)
 
         Dim John = Adam.With(iD:=2, name:="John")
@@ -31,19 +34,9 @@ Module Program
             WithUniversity("Cairo University")
 
         Console.WriteLine(Mohmmad.Print)
+
     End Sub
 
 End Module
 
-Public Class Test
-    Public Property [Date] As Date
-End Class
 
-Public Structure MyStruct
-    Public Property [Date] As Date
-End Structure
-
-Public Class MyAttrAttribute
-    Inherits Attribute
-
-End Class

@@ -1,0 +1,14 @@
+﻿
+''' <summary>
+''' Person record type
+''' </summary>
+''' <param name="FirstName">First Name</param>
+''' <param name="LastName">Last Name</param>
+''' <remarks>
+''' The person type is a positional record containing the
+''' properties for the first and last names.
+''' </remarks>
+Public Record TestXML(
+    FirstName$,
+    LastName$
+)

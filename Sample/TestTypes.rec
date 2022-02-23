@@ -1,0 +1,35 @@
+﻿Imports Microsoft.VisualBasic
+
+' طرق مختلفة لتعريف القائمة ووضع قيمة ابتدائية فيها
+Record TestObjTypes(
+    A As List(Of Byte),
+    B As List(Of Byte) = New List(Of Byte)( ),
+    C = New List(Of Byte),
+    D As New List(Of Byte) From {1, 2, 3}
+)
+
+' طرق مختلفة لتعريف السجل ووضع قيمة ابتدائية فيه
+Record TestStructs(
+    A As MyStruct,
+    B As MyStruct?,  ' سجل منعدم
+    C  As MyStruct = new MyStruct( ),
+    D = New MyStruct( ) With {.Value = 1}
+)
+
+' طرق مختلفة لتعريف متغير من مرقم أو عدد ووضع قيمة ابتدائية فيهما
+Record TestEnums(
+    A As TriState,
+    B As TriState?,
+    C = TriState.True,
+    D  As TriState = TriState.True,
+)
+
+' طرق مختلفة لتعريف صف قيم ووضع قيمة ابتدائية فيه
+Record TestTuples(
+    A As System.ValueTuple,
+    B As System.ValueTuple?,  ' صف قيم منعدم
+    C As (Integer, String) = (1, "abc"),
+    D = (1, "abc"),
+    E = (ID:= 1, Value:= "abc"),
+    F As (ID%, Value%) = (1, "abc")
+)

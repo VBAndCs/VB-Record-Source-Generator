@@ -1,0 +1,9 @@
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\bin\Release\netstandard2.0\RecordGenerator.deps.json
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\bin\Release\netstandard2.0\RecordGenerator.dll
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\bin\Release\netstandard2.0\RecordGenerator.pdb
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Release\netstandard2.0\RecordGenerator.GeneratedMSBuildEditorConfig.editorconfig
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Release\netstandard2.0\RecordGenerator.AssemblyInfoInputs.cache
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Release\netstandard2.0\RecordGenerator.AssemblyInfo.vb
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Release\netstandard2.0\RecordGenerator.vbproj.CoreCompileInputs.cache
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Release\netstandard2.0\RecordGenerator.dll
+F:\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Release\netstandard2.0\RecordGenerator.pdb

@@ -11,6 +11,8 @@ Public Class RecordParser
     Private Const StringQuote As String = "__QUOTE__"
     Public Shared CurrentCompilation As Compilation = Nothing
     Public Shared importsList As New StringBuilder()
+    Public Shared RecordNamespace As String
+
     Private Shared TypeChars As New Dictionary(Of Char, String) From {
         {"%"c, "As Integer"},
         {"&"c, "As Long"},
@@ -20,6 +22,13 @@ Public Class RecordParser
         {"$"c, "As String"}
     }
 
+    Private Shared DefaultNamespaces() As String = {
+         "Microsoft.VisualBasic",
+         "System",
+         "System.LinQ",
+         "System.Collections",
+         "System.Collections.Generic"
+    }
 
     Public Shared Sub Debug(code As String)
         CurrentCompilation = VisualBasicCompilation.Create("Debug")
@@ -27,46 +36,110 @@ Public Class RecordParser
     End Sub
 
 
+    Private Shared Comment As String
+
     Public Shared Sub Generate(context? As GeneratorExecutionContext, code As String)
         Dim st = 0
         importsList.Clear()
-        For Each node In SyntaxFactory.ParseSyntaxTree(code).GetRoot.ChildNodes
-            If node.Kind <> SyntaxKind.ImportsStatement Then
-                st = node.SpanStart
-                Exit For
-            End If
 
-            For Each ImportsClause In CType(node, ImportsStatementSyntax).ImportsClauses
-                importsList.AppendLine("Imports " & ImportsClause.ToString())
+        Dim c = code.TrimStart({ChrW(10), ChrW(13), ChrW(9), " "c})
+        If c.StartsWith("namespace", StringComparison.OrdinalIgnoreCase) Then
+            Dim en = c.IndexOfAny({ChrW(10), ChrW(13)})
+            If en = -1 Then en = c.Length - 1
+            RecordNamespace = c.Substring(9, en - 8).Trim
+            code = c.Substring(en + 1)
+        Else
+            RecordNamespace = ""
+        End If
+
+
+        Comment = SyntaxFactory.ParseLeadingTrivia(code).ToFullString()
+        If Comment.Trim() = "" Then
+            Comment = ""
+        Else
+            code = code.Substring(Comment.Length)
+        End If
+
+        For Each node In SyntaxFactory.ParseSyntaxTree(code).GetRoot.ChildNodes
+            If node.Kind <> SyntaxKind.ImportsStatement Then Exit For
+            st = node.SpanStart + node.Span.Length
+
+            Dim namespaces = CType(node, ImportsStatementSyntax).ImportsClauses
+            For Each importsClause In namespaces
+                Dim ns = importsClause.ToString()
+                Dim exists = (From dns In DefaultNamespaces
+                              Where dns.Equals(ns, StringComparison.OrdinalIgnoreCase)
+                            ).Any
+
+                If Not exists Then importsList.AppendLine("Imports " & ns)
             Next
         Next
 
-        If importsList.Length > 0 Then code = code.Substring(st)
+        If st > 0 Then
+            Comment = SyntaxFactory.ParseLeadingTrivia(code, st).ToFullString()
+            If Comment.Trim() = "" Then
+                Comment = ""
+                code = code.Substring(st)
+            Else
+                code = code.Substring(st + Comment.Length)
+            End If
+        End If
+
         Parse(context, Lower(code, False))
     End Sub
 
     Public Shared Function Lower(code As String, isClassHeader As Boolean) As String
         Dim sb As New StringBuilder(code)
         Dim tokens = SyntaxFactory.ParseTokens(code).ToArray
-        Dim Token = ""
-        Dim PrevToken = tokens(tokens.Length - 1).Text.ToLower()
+        Dim token = ""
+        Dim prevToken = tokens(tokens.Length - 1).Text.ToLower()
 
         For i = tokens.Length - 1 To 0 Step -1
-            Token = PrevToken
-            PrevToken = If(i = 0, "", tokens(i - 1).Text.ToLower())
+            token = prevToken
+            prevToken = If(i = 0, "", tokens(i - 1).Text.ToLower())
 
-            Select Case Token
+            Select Case token
+                Case ">"
+                    ' Lower: Fn(n) => n + 1 
+                    ' To:       Function(n) n + 1
+                    If prevToken = "=" Then
+                        For n = i - 2 To 0 Step -1
+                            If tokens(n).ToString().ToLower() = "fn" AndAlso tokens(n + 1).ToString() = "(" Then
+                                Dim st = tokens(i - 1).SpanStart
+                                sb.Remove(st, tokens(i).Span.End - st + 1)
+
+                                st = tokens(n).SpanStart
+                                sb.Remove(st, 2)
+                                sb.Insert(st, "Function")
+                                Exit For
+                            End If
+                        Next
+                    End If
+
+                Case "new"
+                    ' Lower: As New Type
+                    ' to:       = New Type
+                    If prevToken = "as" Then
+                        Dim kind = tokens(i + 1).Kind
+                        If kind = SyntaxKind.IdentifierToken OrElse kind = SyntaxKind.IdentifierName Then
+                            Dim st = tokens(i - 1).SpanStart
+                            sb.Remove(st, 2)
+                            sb.Insert(st, "=")
+                        End If
+                    End If
+
                 Case "key"
                     Dim B4PrevToken = If(i < 2, "", tokens(i - 2).Text).ToLower()
-                    If (PrevToken = "readonly" OrElse PrevToken = "immitable") AndAlso B4PrevToken <> "[" AndAlso B4PrevToken <> "<" Then
+                    If (prevToken = "readonly" OrElse prevToken = "immitable") AndAlso B4PrevToken <> "[" AndAlso B4PrevToken <> "<" Then
                         Dim st = If(i = 0, 0, tokens(i - 1).SpanStart)
                         sb.Remove(st, Math.Min(tokens(i).Span.End + 1, sb.Length) - st)
                         st = GetStartOfLineIfClassHeader(st, i, tokens)
                         sb.Insert(st, "<ReadOnlyKey>")
                         ' Skip ReadOnly
                         i -= 1
-                        PrevToken = B4PrevToken
-                    ElseIf PrevToken <> "[" AndAlso PrevToken <> "<" Then
+                        prevToken = B4PrevToken
+
+                    ElseIf prevToken <> "[" AndAlso prevToken <> "<" Then
                         Dim st = tokens(i).SpanStart
                         sb.Remove(st, Math.Min(tokens(i).Span.End + 1, sb.Length) - st)
                         st = GetStartOfLineIfClassHeader(st, i, tokens)
@@ -74,7 +147,7 @@ Public Class RecordParser
                     End If
 
                 Case "readonly", "immutable"
-                    If PrevToken <> "[" AndAlso PrevToken <> "<" Then
+                    If prevToken <> "[" AndAlso prevToken <> "<" Then
                         Dim st = tokens(i).SpanStart
                         sb.Remove(st, Math.Min(tokens(i).Span.End + 1, sb.Length) - st)
                         st = GetStartOfLineIfClassHeader(st, i, tokens)
@@ -82,7 +155,7 @@ Public Class RecordParser
                     End If
 
                 Case "readonlykey", "immutablekey"
-                    If PrevToken <> "[" AndAlso PrevToken <> "<" Then
+                    If prevToken <> "[" AndAlso prevToken <> "<" Then
                         Dim st = tokens(i).SpanStart
                         sb.Remove(st, Math.Min(tokens(i).Span.End + 1, sb.Length) - st)
                         st = GetStartOfLineIfClassHeader(st, i, tokens)
@@ -90,7 +163,7 @@ Public Class RecordParser
                     End If
 
                 Case "record"
-                    If isClassHeader AndAlso PrevToken <> "[" AndAlso PrevToken <> "<" Then
+                    If isClassHeader AndAlso prevToken <> "[" AndAlso prevToken <> "<" Then
                         Dim st = tokens(i).SpanStart
                         sb.Remove(st, Math.Min(tokens(i).Span.End + 1, sb.Length) - st)
                         sb.Insert(st, "Class ")
@@ -131,7 +204,6 @@ Public Class RecordParser
     Public Shared Sub Parse(context? As GeneratorExecutionContext, code As String)
 
         Dim tokens = SyntaxFactory.ParseTokens(code).ToArray
-
         ' Skip until class/structure token
         Dim st = 0
         Dim L = tokens.Length - 1
@@ -148,7 +220,7 @@ Public Class RecordParser
             Dim token = tokens(i)
 
             If token.Kind = SyntaxKind.OpenParenToken Then
-                If i < L AndAlso tokens(i + 1).Kind = SyntaxKind.OfKeyword Then ' Skip tokens untile reaching "("
+                If i < L AndAlso tokens(i + 1).Kind = SyntaxKind.OfKeyword Then ' Skip tokens untile reaching ")"
                     Dim j = i + 1
                     Do While j < L
                         token = tokens(j)
@@ -166,32 +238,88 @@ Public Class RecordParser
 
                 Dim members As ParameterListSyntax
                 Try
-                    members = SyntaxFactory.ParseParameterList(code.Substring(token.SpanStart))
+                    Dim lst = code.Substring(token.SpanStart)
+                    members = SyntaxFactory.ParseParameterList(lst)
                 Catch ex As Exception
-                    Throw New Exception("This record doesn't have a valid memberlist:" & vbCrLf & definition)
+                    Throw New Exception("This record doesn't have a valid memberlist:" & vbCrLf & definition & members?.ToString())
                 End Try
 
+                If Not members.ToString().EndsWith(")") Then
+                    Throw New Exception("This record doesn't have a valid memberlist. Check For a missing comma:" & vbCrLf & definition & members.ToString())
+                End If
+
                 Dim pos = token.SpanStart + members.Span.Length
+
+                ' Parse Inheritance and Implementation
                 Dim inheritance = ""
+                Dim implementaion = ""
 
                 If pos < code.Length Then
-                    Dim nextNode = SyntaxFactory.ParseSyntaxTree(code.Substring(pos)).GetRoot().ChildNodes(0)
-                    If nextNode?.Kind = SyntaxKind.InheritsStatement Then
-                        inheritance = nextNode.ToString()
-                        pos += nextNode.Span.Length + 1
+                    ' Inherits Foo, Implements IFoo
+                    ' or  Implements IFoo, Inherits Foo
+                    Dim result = ParseInheritance(code.Substring(pos))
+                    If result.Pos > -1 Then
+                        inheritance = result.InheritsStatement
+                        implementaion = result.ImplementsStatement
+                        pos += result.Pos
                     End If
                 End If
 
-                GenerateRecord(context, inheritance, definition, members)
+                GenerateRecord(context, inheritance, implementaion, definition, members)
                 If pos < code.Length Then Parse(context, code.Substring(pos))
                 Return
             End If
+
         Next
     End Sub
+
+    Private Shared Function ParseInheritance(
+                  code As String
+               ) As (InheritsStatement$, ImplementsStatement$, Pos%)
+
+        Dim inheritsStatement = ""
+        Dim implementsStatement = ""
+        Dim pos = -1
+        Dim Offset = 0
+
+LineAgain:
+        Dim nodes = SyntaxFactory.ParseSyntaxTree(code).GetRoot().ChildNodes
+
+        Dim node = nodes(0)
+        If node IsNot Nothing Then
+            If node.Kind = SyntaxKind.InheritsStatement Then
+                inheritsStatement = node.ToString()
+                pos = node.Span.End
+                If inheritsStatement.Trim.EndsWith(",") Then
+                    inheritsStatement = inheritsStatement.TrimEnd(" "c, ","c)
+                    code = code.Substring(pos)
+                    If Offset = 0 Then
+                        Offset = pos
+                        GoTo LineAgain
+                    End If
+                End If
+
+            ElseIf node.Kind = SyntaxKind.ImplementsStatement Then
+                pos = node.Span.End
+                implementsStatement = node.ToString()
+                If implementsStatement.Trim.EndsWith(",") Then
+                    implementsStatement = implementsStatement.TrimEnd(" "c, ","c)
+                    code = code.Substring(pos)
+                    If Offset = 0 Then
+                        Offset = pos
+                        GoTo LineAgain
+                    End If
+                End If
+            End If
+        End If
+
+        Return (inheritsStatement, implementsStatement, pos + Offset)
+    End Function
 
     Private Shared Sub GenerateRecord(
                        context? As GeneratorExecutionContext,
                        inheritance As String,
+                       implementaion As String,
                        definition As String,
                        paramList As ParameterListSyntax)
 
@@ -248,18 +376,27 @@ Public Class RecordParser
         Dim Properties As New List(Of PropertyInfo)
         Dim Methods As New List(Of String)
 
-        If inheritance <> "" Then AddInheritedPropertiesInfo(inheritance, Properties, DefaultPropInfo)
+        If inheritance <> "" Then
+            AddInheritedPropertiesInfo(inheritance, Properties, DefaultPropInfo)
+        End If
+
         Dim basePropCount = Properties.Count
+
+        Dim interfaceSymbol = GetInterfaceInfo(implementaion)
 
         For Each member As ParameterSyntax In paramList.ChildNodes
             Dim valueExpr = member.Default?.DescendantNodes?(0)
 
             If TypeOf valueExpr Is LambdaExpressionSyntax Then
-                LambdaToMethod(inheritance, Methods, Properties, member, valueExpr)
+                LambdaToMethod(inheritance, Methods, Properties, member, valueExpr, interfaceSymbol, implementaion)
             Else
                 AddPropertyInfo(inheritance, Methods, Properties, basePropCount, DefaultPropInfo, member)
             End If
         Next
+
+        If implementaion <> "" Then
+            ImplementProperties(Properties, InterfaceSymbol, implementaion)
+        End If
 
         ' ------------------------Generate the record class/struct ----------------------------
 
@@ -278,22 +415,42 @@ Option Compare Binary
             record.AppendLine()
         End If
 
+        If RecordNamespace <> "" Then
+            record.AppendLine("Namespace " & RecordNamespace)
+        End If
+
         record.AppendLine()
+        If Comment <> "" Then record.Append(Comment)
 
         record.AppendLine(definition)
         record.AppendLine("    " & inheritance)
+        If implementaion <> "" Then record.AppendLine("    " & implementaion)
+
         record.AppendLine()
-        record.AppendLine(WriteProperties(Properties))
-        WriteConstructor(Properties, record)
+        If Properties.Count > 0 Then
+            record.AppendLine(WriteProperties(Properties))
+            WriteConstructor(Properties, record)
+        End If
+
         record.AppendLine(WriteMethods(Methods))
-        WriteWith(className, typeParams, Properties, record)
-        WriteWithProps(className, typeParams, Properties, record)
-        WriteClone(className, typeParams, record)
-        WriteToString(className, Properties, record)
-        WriteEquals(className, typeParams, Properties, record)
-        WriteEqualityOps(className, typeParams, record)
-        WriteTuplesOps(className, typeParams, Properties, record)
+
+        If Properties.Count > 0 Then
+            WriteWith(className, typeParams, Properties, record)
+            WriteWithProps(className, typeParams, Properties, record)
+            WriteClone(className, typeParams, record)
+            WriteToString(className, Properties, record)
+            WriteEquals(className, typeParams, Properties, record)
+            WriteEqualityOps(className, typeParams, record)
+            WriteTuplesOps(className, typeParams, Properties, record)
+        End If
+
+
         record.Append(If(isClass, "End Class", "End Structure"))
+
+        If RecordNamespace <> "" Then
+            record.AppendLine(vbCrLf)
+            record.AppendLine("End Namespace")
+        End If
 
         If context.HasValue Then
             Dim rec = record.ToString()
@@ -304,20 +461,24 @@ Option Compare Binary
 
     End Sub
 
+
     Private Shared Sub LambdaToMethod(
                                      inheritance As String,
                                      methods As List(Of String),
                                      properties As List(Of PropertyInfo),
                                      param As ParameterSyntax,
-                                     lanbdaExpr As LambdaExpressionSyntax)
+                                     lanbdaExpr As LambdaExpressionSyntax,
+                                     interfaceSymbol As ITypeSymbol,
+                                     implementation As String)
 
-        Dim Header = lanbdaExpr.SubOrFunctionHeader
-        Dim MethodType = Header.DeclarationKeyword.Text
-        Dim isSub = MethodType.ToLower() = "sub"
+        Dim header = lanbdaExpr.SubOrFunctionHeader
+        Dim methodType = header.DeclarationKeyword.Text
+        Dim isSub = methodType.ToLower() = "sub"
         Dim AsClause = ""
         If Not isSub Then
-            AsClause = If(Header.AsClause?.ToString(), InferType(inheritance, methods, properties, param.Default.ToString()).Type)
+            AsClause = If(header.AsClause?.ToString(), InferType(inheritance, methods, properties, param.Default.ToString()).Type)
         End If
+
         Dim lambdaBody As String = ""
         If TypeOf lanbdaExpr Is SingleLineLambdaExpressionSyntax Then
             lambdaBody = If(isSub, "", "Return ") & CType(lanbdaExpr, SingleLineLambdaExpressionSyntax).Body.ToString()
@@ -328,10 +489,92 @@ Option Compare Binary
             lambdaBody = lambdaBody.Trim({ChrW(10), ChrW(13)})
         End If
 
+        Dim methodName = param.Identifier.ToString()
+        Dim params = header.ParameterList
+        Dim _implements = ""
+
+        If implementation <> "" Then
+            Dim methodSymbols = interfaceSymbol.GetMembers().
+            OfType(Of IMethodSymbol)().
+            Where(Function(m) m.CanBeReferencedByName AndAlso Not m.IsGenericMethod).
+            ToList()
+
+            Dim nodes = params.ChildNodes
+
+            If methodSymbols.Count > 0 Then
+                Dim matchingMethods =
+                      From m In methodSymbols
+                      Where methodName.ToLower = m.Name.ToLower AndAlso
+                            (isSub = m.ReturnsVoid OrElse m.ReturnsVoid) AndAlso
+                             nodes.Count = m.Parameters.Count
+
+                If matchingMethods.Any Then
+                    Dim n = nodes.Count - 1
+                    Dim paramTypes(n) As String
+                    Dim argList = ""
+
+                    For i = 0 To n
+                        Dim p = CType(nodes(i), ParameterSyntax)
+                        Dim delLastChr = False
+                        Dim t = p.AsClause?.ToString()
+
+                        If t = "" Then
+                            Dim paramName = p.ToString().TrimEnd("?"c)
+                            Dim c = paramName(paramName.Length - 1)
+                            If TypeChars.ContainsKey(c) Then
+                                delLastChr = True
+                                paramTypes(i) = TypeChars(c).Substring(3).ToLower()
+                            Else
+                                paramTypes(i) = "object"
+                            End If
+                        Else
+                            paramTypes(i) = t.Substring(2).ToLower()
+                        End If
+
+                        Dim name = p.Identifier.ToString()
+                        If delLastChr Then
+                            argList &= name.Substring(0, name.Length - 1).TrimEnd("?"c) & ", "
+                        Else
+                            argList &= name.TrimEnd("?"c) & ", "
+                        End If
+                    Next
+
+                    For Each m In matchingMethods
+                        Dim ok = True
+                        For i = 0 To n
+                            If paramTypes(i) <> m.Parameters(i).Type.ToString().ToLower() Then
+                                ok = False
+                                Continue For
+                            End If
+                        Next
+
+                        If ok Then
+                            If m.ReturnsVoid AndAlso Not isSub Then
+                                If argList <> "" Then argList = argList.Substring(0, argList.Length - 2)
+
+                                methods.Add(
+$"    Private Sub {interfaceSymbol.Name}_{methodName}{params} {implementation}.{m.Name}
+        {methodName}({argList})
+    End Sub")
+
+                            Else
+                                _implements = $" {implementation}.{m.Name}"
+                            End If
+
+                            Exit For
+                        End If
+                    Next
+                End If
+
+            End If
+        End If
+
+
         methods.Add(
-$"    Public {MethodType} { param.Identifier}{Header.ParameterList} {AsClause}
-        {lambdaBody}
-    End {MethodType}")
+$"    Public {methodType} {methodName}{params} {AsClause}{_implements}
+        {lambdaBody.Replace(vbCrLf, vbCrLf & "        ")}
+    End {methodType}")
+
     End Sub
 
     Public Shared Sub AddPropertyInfo(
@@ -344,7 +587,7 @@ $"    Public {MethodType} { param.Identifier}{Header.ParameterList} {AsClause}
                                   )
 
         Dim AccessAttr = param.AttributeLists
-        Dim prop As PropertyInfo = Nothing
+        Dim prop As New PropertyInfo
         If AccessAttr.Count > 0 Then prop = GetPropertyInfo(AccessAttr)
 
         Dim belongsToType = ""
@@ -493,6 +736,21 @@ End Class
     Public Shared Function WriteProperties(Properties As List(Of PropertyInfo)) As String
         Dim props As New StringBuilder
         For Each p In Properties
+            If p.IsPrivateImplementation Then
+                props.AppendLine(
+$"   Private Property [{p.Name}] As {p.Type} {p.Implements}
+        Get
+            Return _{p.PublicPropName}
+        End Get
+        Set
+            _{p.PublicPropName} = Value
+        End Set
+   End Property")
+
+                props.AppendLine()
+                Continue For
+            End If
+
             If p.IsKey Then props.AppendLine("   <Key>")
 
             If p.DefaultValue <> "" Then
@@ -505,8 +763,10 @@ End Class
             If p.InheritanceModifier <> "" Then props.Append(p.InheritanceModifier & " ")
             If p.IsReadOnly = True Then props.Append("ReadOnly ")
             props.Append($"Property [{p.Name}] As {p.Type}")
+            If p.Implements <> "" Then props.Append(p.Implements)
             props.AppendLine(vbCrLf)
         Next
+
         props.AppendLine()
         Return props.ToString()
     End Function
@@ -519,6 +779,8 @@ End Class
         record.AppendLine("    Public Sub New(")
 
         For Each p In Properties
+            If p.IsPrivateImplementation Then Continue For
+
             If addSep Then
                 params.Append("," & vbCrLf)
             Else
@@ -561,7 +823,10 @@ $"        If [{p.camelCaseName}].HasValue
         Return sb.ToString
     End Function
 
-    Private Shared Sub WriteTuplesOps(className As String, typeParams As String, Properties As List(Of PropertyInfo), record As StringBuilder)
+    Private Shared Sub WriteTuplesOps(className As String, typeParams As String, allProperties As List(Of PropertyInfo), record As StringBuilder)
+        Dim properties = From p In allProperties
+                         Where Not p.IsPrivateImplementation
+
         For n = 1 To Properties.Count - 1
             Dim body As New StringBuilder
             Dim addSep = False
@@ -577,6 +842,7 @@ $"        If [{p.camelCaseName}].HasValue
                 record.Append($"[{p.Name}] As {p.Type}")
                 body.Append($"anotherRecord.{p.Name}")
             Next
+
             record.AppendLine(")")
             record.Append("        Return (")
             record.Append(body.ToString())
@@ -601,6 +867,7 @@ $"        If [{p.camelCaseName}].HasValue
                 record.Append($"[{p.Name}] As {p.Type}")
                 body.Append($"fromTuple.{p.Name}")
             Next
+
             record.AppendLine($")) As {className}{typeParams}")
             record.Append($"        Return new {className}{typeParams}(")
             record.Append(body.ToString)
@@ -664,6 +931,8 @@ $"    Public Function Clone() As {className}{typeParams}
 
     Private Shared Sub WriteWithProps(className As String, typeParams As String, Properties As List(Of PropertyInfo), record As StringBuilder)
         For Each p In Properties
+            If p.IsPrivateImplementation Then Continue For
+
             record.AppendLine($"    Public Function With{p.Name}([{p.camelCaseName}] As {p.Type}) As {className}{typeParams}")
             record.AppendLine($"        Return Me.With([{p.camelCaseName}]:=[{p.camelCaseName}])")
             record.AppendLine("    End Function")
@@ -677,6 +946,8 @@ $"    Public Function Clone() As {className}{typeParams}
         Dim addSep = False
 
         For Each p In Properties
+            If p.IsPrivateImplementation Then Continue For
+
             If addSep Then
                 params.Append("," & vbCrLf)
                 body.Append("," & vbCrLf)
@@ -711,6 +982,11 @@ $"    Public Function Clone() As {className}{typeParams}
                                      defaultPropInfo As PropertyInfo)
 
         Dim code = $"
+Imports Microsoft.VisualBasic
+Imports System
+Imports System.LinQ
+Imports System.Collections
+Imports System.Collections.Generic
 {importsList}
 Class Test_00000000000000
    {inheritance}
@@ -724,9 +1000,10 @@ End Class
 
         Try
             Dim baseClass = sem.GetTypeInfo(inhertsStatement.ChildNodes(0)).Type
-            For Each m In baseClass.GetMembers()
-                Dim prop = TryCast(m, IPropertySymbol)
-                If prop IsNot Nothing AndAlso prop.DeclaredAccessibility = Accessibility.Public Then
+            For Each prop In baseClass.GetMembers()
+                If TypeOf prop IsNot IPropertySymbol AndAlso TypeOf prop IsNot IFieldSymbol Then Continue For
+
+                If prop.DeclaredAccessibility = Accessibility.Public Then
                     Dim attrs = prop.GetAttributes()
                     Dim defValue = ""
                     Dim isKey = defaultPropInfo.IsKey
@@ -740,11 +1017,12 @@ End Class
 
                     Dim propInfo = New PropertyInfo() With {
                         .Name = prop.Name,
-                        .Type = "As " & prop.Type.ToString(),
+                        .Type = "As " & GetPropType(prop),
+                        .IsField = TypeOf prop Is IFieldSymbol,
                         .LiteralDefVal = If(defValue = "", False, defValue(0) = "1"c),
                         .DefaultValue = If(defValue = "", "", defValue.Substring(1)),
                         .IsKey = isKey,
-                        .IsReadOnly = prop.IsReadOnly OrElse defaultPropInfo.IsReadOnly,
+                        .IsReadOnly = IsReadOnly(prop) OrElse defaultPropInfo.IsReadOnly,
                         .InheritanceModifier = If(prop.IsMustOverride OrElse prop.IsOverridable, "Overrides", "Shadows")
                     }
 
@@ -759,6 +1037,87 @@ End Class
         End Try
     End Sub
 
+    Public Shared Function GetInterfaceInfo(implementation As String) As ITypeSymbol
+        If implementation = "" Then Return Nothing
+
+        Dim code = $"
+Imports Microsoft.VisualBasic
+Imports System
+Imports System.LinQ
+Imports System.Collections
+Imports System.Collections.Generic
+{importsList}
+Class Test_00000000000000
+   {implementation}
+End Class
+"
+
+        Dim syntaxTree = SyntaxFactory.ParseSyntaxTree(code)
+        Dim comp = CurrentCompilation.AddSyntaxTrees(syntaxTree)
+        Dim sem = comp.GetSemanticModel(syntaxTree)
+        Dim implementsStatement = syntaxTree.GetRoot().DescendantNodes().OfType(Of ImplementsStatementSyntax)().FirstOrDefault
+
+        Try
+            Return sem.GetTypeInfo(implementsStatement.ChildNodes(0)).Type
+        Catch
+        End Try
+        Return Nothing
+    End Function
+
+    Private Shared Sub ImplementProperties(
+                 properties As List(Of PropertyInfo),
+                 interfaceSymbol As ITypeSymbol,
+                 implementation As String)
+
+        Dim propSymbols = interfaceSymbol.GetMembers().
+            OfType(Of IPropertySymbol)().
+            Where(Function(p) Not (p.IsIndexer OrElse p.Parameters.Count > 0)).
+            ToList()
+
+        If propSymbols.Count = 0 Then Return
+
+        Dim prvProps As New List(Of PropertyInfo)
+
+        For Each prop In properties
+            Dim props = From p In propSymbols
+                        Where prop.Name.ToLower = p.Name.ToLower AndAlso
+                            prop.Type = p.Type.ToString()
+
+            If props.Any Then
+                Dim iProp = props(0)
+                If prop.IsReadOnly AndAlso Not iProp.IsReadOnly Then
+                    prvProps.Add(New PropertyInfo With {
+                         .IsPrivateImplementation = True,
+                         .PublicPropName = prop.Name,
+                         .Name = $"{interfaceSymbol.Name}_{prop.Name}",
+                         .Type = prop.Type,
+                         .Implements = $" {implementation}.{iProp.Name}"
+                    })
+                Else
+                    prop.Implements = $" {implementation}.{iProp.Name}"
+                End If
+            End If
+        Next
+
+        properties.AddRange(prvProps)
+    End Sub
+
+    Private Shared Function IsReadOnly(prop As ISymbol) As Boolean
+        If TypeOf prop Is IPropertySymbol Then
+            Return CType(prop, IPropertySymbol).IsReadOnly
+        Else
+            Return CType(prop, IFieldSymbol).IsReadOnly
+        End If
+    End Function
+
+    Private Shared Function GetPropType(prop As ISymbol) As String
+        If TypeOf prop Is IPropertySymbol Then
+            Return CType(prop, IPropertySymbol).Type.ToString
+        Else
+            Return CType(prop, IFieldSymbol).Type.ToString
+        End If
+    End Function
+
     Private Shared Function InferType(
                                      inheritance As String,
                                      methods As List(Of String),
@@ -767,6 +1126,11 @@ End Class
                          ) As (IsConst As Boolean, Type As String, IsValueType As Boolean)
 
         Dim code = $"
+Imports Microsoft.VisualBasic
+Imports System
+Imports System.LinQ
+Imports System.Collections
+Imports System.Collections.Generic
 {importsList}
 Class Test_00000000000001
    {inheritance}

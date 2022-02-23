@@ -1,0 +1,11 @@
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\bin\Debug\net6.0\RecordGenerator.deps.json
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\bin\Debug\net6.0\RecordGenerator.dll
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\bin\Debug\net6.0\ref\RecordGenerator.dll
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\bin\Debug\net6.0\RecordGenerator.pdb
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Debug\net6.0\RecordGenerator.GeneratedMSBuildEditorConfig.editorconfig
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Debug\net6.0\RecordGenerator.AssemblyInfoInputs.cache
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Debug\net6.0\RecordGenerator.AssemblyInfo.vb
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Debug\net6.0\RecordGenerator.vbproj.CoreCompileInputs.cache
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Debug\net6.0\RecordGenerator.dll
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Debug\net6.0\ref\RecordGenerator.dll
+E:\محمد حمدي\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Debug\net6.0\RecordGenerator.pdb

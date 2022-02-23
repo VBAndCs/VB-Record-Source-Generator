@@ -7,7 +7,7 @@ Imports Microsoft.CodeAnalysis.Text
 Imports Microsoft.CodeAnalysis.VisualBasic
 
 <Generator(LanguageNames.VisualBasic)>
-Public Class RecordGenerator
+Public Class RecGen
     Implements ISourceGenerator
 
     Public Sub Initialize(context As GeneratorInitializationContext) Implements ISourceGenerator.Initialize
@@ -18,7 +18,7 @@ Public Class RecordGenerator
         Dim errList As New List(Of (RecordName As String, Code As String, Exception As Exception))
 
         Dim recFiles = From file In context.AdditionalFiles
-                           Where file.Path.ToLower().EndsWith(".rec")
+                       Where file.Path.ToLower().EndsWith(".rec")
 
         If Not recFiles.Any Then Return
 
@@ -58,7 +58,7 @@ Module {errDetails.RecordName}_ErrorDetails
      ' {errDetails.Code.Replace(vbLf, vbLf & "'")}
      ' cuased this error:
      ' {errDetails.Exception.Message.Replace(vbLf, vbLf & "'")}
-     ' {errDetails.Exception.StackTrace.Replace(vbLf, vbLf & "'")}
+     ' {errDetails.Exception.StackTrace?.Replace(vbLf, vbLf & "'")}
 End Module", Encoding.UTF8))
         Next
     End Sub

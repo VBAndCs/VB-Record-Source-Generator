@@ -1,4 +1,4 @@
-﻿Public Structure PropertyInfo
+﻿Public Class PropertyInfo
     Public IsReadOnly As Boolean
     Public IsKey As Boolean
 
@@ -19,7 +19,11 @@
     Public camelCaseName As String
     Public Type As String
     Public DefaultValue As String
-    Friend LiteralDefVal As Boolean
-    Friend Attrs As String
-    Friend IsValueType As Boolean
-End Structure
+    Public LiteralDefVal As Boolean
+    Public Attrs As String
+    Public IsValueType As Boolean
+    Public IsField As Boolean
+    Public [Implements] As String
+    Friend IsPrivateImplementation As Boolean
+    Friend PublicPropName As String
+End Class

@@ -1,0 +1,29 @@
+﻿
+Namespace MyApp.Tests
+
+Imports System.Text
+
+
+Class Zero()
+Record TestSB(SB As StringBuilder)
+
+
+Public Class TestImplementaion(
+    Name$,
+    Pos As (X%, Y%),
+    ReadOnly Age%,
+    Move = Sub(x%) _Pos.X = x,
+    Move = Function(x%, y%) 
+                       _Pos = (x, y)
+                       Return True
+                  End Function,
+    GetText = Function(name$) "Hello " & name,
+    GetText = Function( ) "Hello",
+    Concat = Function(x$, y$) x & y,
+    Concat = Fn(x$, y$, n%) => x & y & n.ToString()
+) Inherits Test, Implements ITest(Of Integer)
+
+
+Record Msg(
+   ShowMsg = Sub() Console.WriteLine("Hello World!")
+)

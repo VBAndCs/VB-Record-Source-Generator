@@ -1,12 +1,13 @@
 ![Untitled](https://user-images.githubusercontent.com/48354902/122991838-c8fcb000-d3a5-11eb-98de-46e853a21272.png)
 
-# VB Record Source Generator
+# VB Record Source Generator v2.0
+See what's new in V2.0 at the end of the file.
 An amazing new feature called `Source Generators` has been added to VB.NET since VS.NET 16.9. It allows you to write code to generate another code that is added to your project in compilation time. 
 You can combine this feature with the Roslyn compiler powerful tools (like SyntaxFacyoty, SyntaxTree and SemanticModel) to parse, compile and analyze VB syntax and generate any additional code you want. As an application of these concepts, I created a syntax for VB Records (quite similar to C# records). It consists of a `Class/Structure declaration` followed by a `parameter list`, followed by an optional `Inherits statement`. You can also add Imports statements at top of the file. 
 These all 4 parts are valid VB syntax parts, but I grouped them to compose the new record syntax. This allows me to use Roslyn to parse my syntax as if it is a formal VB syntax, which made my write the code generator easily.
-These are three poosible variations of the record syntax:
+These are three possible variations of the record syntax:
 ```VB.NET
-Public Record NameValue(Name ="", Value = 0.0)
+Public Record NameValue(Name = "", Value = 0.0)
 ```
 
 ```VB.NET
@@ -17,7 +18,7 @@ Public ReadOnly Structure ROStruct(X$, Y%, Z@)
 Friend ReadOnly Class ROClass(A As Integer, B As Integer)
 ```
 
- #To use the Record Generator:
+# To use the Record Generator:
 1. Add the NuGet package to your project.
 ```
 PM> Install-Package Visual-Basic-Record-Generator
@@ -145,6 +146,30 @@ In fact you don't have to worry about all these details, because it is used inte
 3. `new [Nothing](Of T)`
 Where T is the type of the property.
 Note that this is not needed with value types, unless they are nullable (Like `Integer?`). I treat Nullable types as ref types because you may want to set them to Nothing.
+
+
+# What's new in V2.0?
+* Allow to declare a namespace for the records:
+   Add the Namespace statement as the first statement in the file, without `End Statement`. 
+   Ex: `Namespace MyApp.Test`
+
+* Allow record to implement Interfaces.
+  Add the Implements statement after the record property list. If you need to inherit a class to, add the two statements separated by `,` in any order:
+  ```
+  Record Obj(
+      Dispose = Sub() Console.WriteLine("Disposed")
+  ) Implements IDisposable
+  ```
+
+  Record properties and methods that match those of the interface are used to implement it in the generated class. I allowed functions to implement Subs, and readonly properties to implement read-write properties, but note that means that the property valuee can be chamge via the interface, dispit it is readonly.
+  Note that record syntax doesn't allow to implement Indexers nor generic methods, but you can create a partial class to implement then as you do in other classes.
+
+* Allow property-less records.   
+* Allow `As new` expression in property definition:
+   ` Record Test(Data As New List(Of T))
+* Records now are aware of some default imported namespaces:
+    like Sytem, System.Collections.Generic, and Microsoft.VisualBasic, so, you don't need to import them.
+
 
 # To Do:
 It will be helpful if .rec files have intellisense support, formatting, coloring, and syntax errors check.
