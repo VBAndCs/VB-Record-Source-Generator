@@ -2,10 +2,17 @@
 
 # VB Record Source Generator v2.0
 See what's new in V2.0 at the end of the file.
-An amazing new feature called `Source Generators` has been added to VB.NET since VS.NET 16.9. It allows you to write code to generate another code that is added to your project in compilation time. 
-You can combine this feature with the Roslyn compiler powerful tools (like SyntaxFacyoty, SyntaxTree and SemanticModel) to parse, compile and analyze VB syntax and generate any additional code you want. As an application of these concepts, I created a syntax for VB Records (quite similar to C# records). It consists of a `Class/Structure declaration` followed by a `parameter list`, followed by an optional `Inherits statement`. You can also add Imports statements at top of the file. 
-These all 4 parts are valid VB syntax parts, but I grouped them to compose the new record syntax. This allows me to use Roslyn to parse my syntax as if it is a formal VB syntax, which made my write the code generator easily.
+
+An amazing new feature called `Source Generators` has been added to VB.NET since VS.NET 16.9.
+It allows you to write code to generate another code that is added to your project in compilation time. 
+You can combine this feature with the Roslyn compiler powerful tools (like SyntaxFacyoty, SyntaxTree and SemanticModel) to parse, compile and analyze VB syntax and generate any additional code you want. 
+As an application of these concepts, I created a syntax for VB Records (quite similar to C# records). 
+It consists of a `Class/Structure declaration` followed by a `parameter list`, followed by an optional `Inherits statement`. 
+You can also add Imports statements at top of the file. 
+These all 4 parts are valid VB syntax parts, but I grouped them to compose the new record syntax. 
+This allows me to use Roslyn to parse my syntax as if it is a formal VB syntax, which made my write the code generator easily.
 These are three possible variations of the record syntax:
+
 ```VB.NET
 Public Record NameValue(Name = "", Value = 0.0)
 ```
@@ -169,6 +176,9 @@ Note that this is not needed with value types, unless they are nullable (Like `I
    ` Record Test(Data As New List(Of T))
 * Records now are aware of some default imported namespaces:
     like Sytem, System.Collections.Generic, and Microsoft.VisualBasic, so, you don't need to import them.
+* Allow `Fn() =>` syntax for lambda expressions. Fn is a legacy vb keyword for Functions. Ex:
+`Record Foo(Sum = Fn(a, b) => a + b)`
+I see this syntax better than C# syntax and VB syntax for lambdas, so, I supported it in ZML before, and now in RecGen.
 
 
 # To Do:
