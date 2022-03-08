@@ -1,6 +1,6 @@
 ﻿Imports Microsoft.VisualBasic
 
-' طرق مختلفة لتعريف القائمة ووضع قيمة ابتدائية فيها
+' Lists
 Record TestObjTypes(
     A As List(Of Byte),
     B As List(Of Byte) = New List(Of Byte)( ),
@@ -8,7 +8,7 @@ Record TestObjTypes(
     D As New List(Of Byte) From {1, 2, 3}
 )
 
-' طرق مختلفة لتعريف السجل ووضع قيمة ابتدائية فيه
+' Structures
 Record TestStructs(
     A As MyStruct,
     B As MyStruct?,  ' سجل منعدم
@@ -16,7 +16,7 @@ Record TestStructs(
     D = New MyStruct( ) With {.Value = 1}
 )
 
-' طرق مختلفة لتعريف متغير من مرقم أو عدد ووضع قيمة ابتدائية فيهما
+' Enums
 Record TestEnums(
     A As TriState,
     B As TriState?,
@@ -24,7 +24,7 @@ Record TestEnums(
     D  As TriState = TriState.True,
 )
 
-' طرق مختلفة لتعريف صف قيم ووضع قيمة ابتدائية فيه
+' Tuples
 Record TestTuples(
     A As System.ValueTuple,
     B As System.ValueTuple?,  ' صف قيم منعدم
@@ -32,4 +32,14 @@ Record TestTuples(
     D = (1, "abc"),
     E = (ID:= 1, Value:= "abc"),
     F As (ID%, Value%) = (1, "abc")
+)
+
+' 4 ways for Delegats
+' 1 way for Functions
+public Record TestDelegate(
+    Delegate1 As Action, 
+    Delegate2 As Func(Of Integer),
+    Delegate3 As Action(Of String) = AddressOf MySub,    
+    Delegate4 As Func(Of Integer, Integer) = Function(x) x + 1,
+    Method1 = Function( ) "This is a Function"
 )

@@ -43,7 +43,7 @@ Namespace RecordGeneratorTests
         End Function
 
         <TestMethod>
-        Public Sub SB()
+        Public Sub [Imports]()
             Dim TestRecord = <![CDATA[
 Imports System.Text
 Record TestSB(SB As StringBuilder)
@@ -54,6 +54,30 @@ Record TestSB(SB As StringBuilder)
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
             Assert.AreEqual(GetHash(result.Output), "E241C5FF0BE927480D716AC7A9D50F57")
+        End Sub
+
+        <TestMethod>
+        Public Sub Delegates()
+            Dim TestRecord = <![CDATA[
+' Comment Line 1
+Public Record Zero()
+
+' Comment Line 2
+' Comment Line 3
+Public Record TestDelegate(
+    Delegate1 As Action, 
+    Delegate2 As Func(Of Integer),
+    Delegate3 As Action(Of String) = AddressOf MySub,
+    Delegate4 As Func(Of Integer, Integer) = Function(x) x + 1,
+    Method1 = Function( ) "This is a Function"
+)
+]]>.Value
+
+            Dim result = GetGeneratedOutput(TestSourceCode, TestRecord)
+            For Each diag In result.Diagnostics
+                Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
+            Next
+            Assert.AreEqual(GetHash(result.Output), "7B1D54CEAFC2F7C56EC3C1952EBD9F13")
         End Sub
 
         <TestMethod>
@@ -316,7 +340,8 @@ Friend ReadOnly Class ROClass(A As Integer, B As Integer)
 
         <TestMethod>
         Public Sub ThreeMultiLineRecords()
-            Dim TestRecord = <![CDATA[Imports System.Text, System.IO
+            Dim TestRecord = <![CDATA[
+Imports System.Text, System.IO
 Imports System.Collections 
 
 Public Class Person(

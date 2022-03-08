@@ -9,12 +9,12 @@
 
   <PropertyGroup>
     <PackageId>Visual-Basic-Record-Generator</PackageId>
-    <Title>VB.NET Record Source Generator</Title>
-    <PackageVersion>2.0.1.0</PackageVersion>
+    <Title>RecGen: A VB.NET Record Source Generator</Title>
+    <PackageVersion>2.1.0.0</PackageVersion>
     <Authors>Mohammad Hamdy Ghanem</Authors>
     <PackageProjectUrl>https://github.com/VBAndCs/VB-Record-Source-Generator</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Summary>A VB.NET source generator</Summary>
+    <Summary>A source generator to generate VB.NET Records</Summary>
     <Description>Source generators is a new feature added to VB.NET since VS.NET version 16.9. It allows you to write code to generate code that is added to your source code in compilation time. You can combine this feature with the Roslyn compiler powerful tools like SyntaxFacyoty, SyntaxTree and SemanticModel to parse, compile and analyze VB syntax and generate any additional code based on that. As an application of these concept, I made a syntax for VB Records, which consists of a Class/Structure declaration followed by a parameter list, followed by an optional Inherits statement. You can also add Imports statements at top of the file. These 4 parts are all VB valid syntax parts, but I grouped them in a new way to form the record syntax. See documentation for more information about the record syntax.
 See the readme for more info about how to use the Record Generator and the record syntax.
       
@@ -42,12 +42,12 @@ See the readme for more info about how to use the Record Generator and the recor
   - Supports type inference for properties with default Values.</PackageReleaseNotes>
     <PackageTags>VB.NET, Records, Source Generators</PackageTags>
     <NoPackageAnalysis>true</NoPackageAnalysis>
-    <Version>2.0.1</Version>
+    <Version>2.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="3.9.0-2.final"/>
-    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.2"  />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="3.9.0-2.final" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.2" />
     <PackageReference Update="NETStandard.Library" PrivateAssets="all" />
   </ItemGroup>
 

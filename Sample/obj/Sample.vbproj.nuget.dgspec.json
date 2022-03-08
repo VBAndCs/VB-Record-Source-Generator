@@ -21,6 +21,7 @@
           "net6.0"
         ],
         "sources": {
+          "E:\\1": {},
           "https://api.nuget.org/v3/index.json": {},
           "https://dotnet.myget.org/F/roslyn/api/v3/index.json": {}
         },

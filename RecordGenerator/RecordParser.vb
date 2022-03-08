@@ -52,13 +52,7 @@ Public Class RecordParser
             RecordNamespace = ""
         End If
 
-
-        Comment = SyntaxFactory.ParseLeadingTrivia(code).ToFullString()
-        If Comment.Trim() = "" Then
-            Comment = ""
-        Else
-            code = code.Substring(Comment.Length)
-        End If
+        code = ParseComment(code)
 
         For Each node In SyntaxFactory.ParseSyntaxTree(code).GetRoot.ChildNodes
             If node.Kind <> SyntaxKind.ImportsStatement Then Exit For
@@ -87,6 +81,17 @@ Public Class RecordParser
 
         Parse(context, Lower(code, False))
     End Sub
+
+    Private Shared Function ParseComment(code As String) As String
+        Comment = SyntaxFactory.ParseLeadingTrivia(code).ToFullString()
+        If Comment.Trim() = "" Then
+            Comment = ""
+        Else
+            code = code.Substring(Comment.Length)
+        End If
+
+        Return code
+    End Function
 
     Public Shared Function Lower(code As String, isClassHeader As Boolean) As String
         Dim sb As New StringBuilder(code)
@@ -266,7 +271,10 @@ Public Class RecordParser
                 End If
 
                 GenerateRecord(context, inheritance, implementaion, definition, members)
-                If pos < code.Length Then Parse(context, code.Substring(pos))
+                If pos < code.Length Then
+                    code = ParseComment(code.Substring(pos))
+                    Parse(context, code)
+                End If
                 Return
             End If
 
@@ -387,7 +395,7 @@ LineAgain:
         For Each member As ParameterSyntax In paramList.ChildNodes
             Dim valueExpr = member.Default?.DescendantNodes?(0)
 
-            If TypeOf valueExpr Is LambdaExpressionSyntax Then
+            If member.AsClause Is Nothing AndAlso TypeOf valueExpr Is LambdaExpressionSyntax Then
                 LambdaToMethod(inheritance, Methods, Properties, member, valueExpr, interfaceSymbol, implementaion)
             Else
                 AddPropertyInfo(inheritance, Methods, Properties, basePropCount, DefaultPropInfo, member)
@@ -598,10 +606,10 @@ $"    Public {methodType} {methodName}{params} {AsClause}{_implements}
         ' Handle type chars
         Dim n = prop.Name.Length - 1
         Dim c = prop.Name(n)
-        Dim typeOfChar As String = ""
+        Dim typeChar As String = ""
         If TypeChars.ContainsKey(c) Then
             prop.Name = prop.Name.Substring(0, n)
-            typeOfChar = TypeChars(c)
+            typeChar = TypeChars(c)
         End If
 
         prop.Name = prop.Name.Trim("["c, "]"c)
@@ -648,7 +656,7 @@ $"    Public {methodType} {methodName}{params} {AsClause}{_implements}
         prop.IsReadOnly = prop.IsReadOnly Or DefaultPropInfo.IsReadOnly
         prop.IsKey = prop.IsKey Or DefaultPropInfo.IsKey
 
-        prop.Type = If(param.AsClause?.ToString(), typeOfChar)
+        prop.Type = If(param.AsClause?.ToString(), typeChar)
         If prop.Type <> "" AndAlso prop.Type.Trim().Length < 4 Then prop.Type = "As Object"
         If belongsToType <> "" AndAlso Not prop.Type.EndsWith(belongsToType) Then prop.Type = prop.Type & belongsToType
 
@@ -1151,7 +1159,8 @@ End Class
 
         Dim isConst = False
         Try
-            Dim valueSymbol = sem.GetSymbolInfo(CType(variableDeclaration.Declarators(0).Initializer.Value, SingleLineLambdaExpressionSyntax).Body).Symbol
+            Dim body = CType(variableDeclaration.Declarators(0).Initializer.Value, SingleLineLambdaExpressionSyntax).Body
+            Dim valueSymbol = sem.GetSymbolInfo(body).Symbol
             isConst = valueSymbol IsNot Nothing AndAlso (TryCast(valueSymbol, IFieldSymbol)?.IsConst OrElse TryCast(valueSymbol, ILocalSymbol)?.IsConst)
         Catch
 

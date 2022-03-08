@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>Visual-Basic-Record-Generator</id>
+    <version>2.0.1</version>
+    <title>VB.NET Record Source Generator</title>
+    <authors>Mohammad Hamdy Ghanem</authors>
+    <projectUrl>https://github.com/VBAndCs/VB-Record-Source-Generator</projectUrl>
+    <description>Source generators is a new feature added to VB.NET since VS.NET version 16.9. It allows you to write code to generate code that is added to your source code in compilation time. You can combine this feature with the Roslyn compiler powerful tools like SyntaxFacyoty, SyntaxTree and SemanticModel to parse, compile and analyze VB syntax and generate any additional code based on that. As an application of these concept, I made a syntax for VB Records, which consists of a Class/Structure declaration followed by a parameter list, followed by an optional Inherits statement. You can also add Imports statements at top of the file. These 4 parts are all VB valid syntax parts, but I grouped them in a new way to form the record syntax. See documentation for more information about the record syntax.
+See the readme for more info about how to use the Record Generator and the record syntax.</description>
+    <releaseNotes># Ver 2.0:
+		- Allow to declare a namespace for the records
+		- Allow record to implement Interfaces.
+		- Allow property-less records.
+		- Allow `As new` expression in property definition.
+		- Records now are aware of some default imported namespaces, like Sytem, System.Collections.Generic, and Microsoft.VisualBasic, so, you don't need to import them.
+
+		# Ver 1.2:
+		- Using nullable params for ValueTypes, and using Optional(T) params with nullable types and ref types.
+		# Ver 1.1:
+		- Supports using Record key word instead of &lt;Record&gt; Class.
+  - Supprts using Ky, ReadOnly (Or Immutable) and ReadOnly Key (Or Immutable Key)  as keywords instead of Attrs.
+  - Supports using any ,net or user-defined attrs with the class it's properties.
+  - Supports using ?, (), and type chars after the property name.
+  - Enhanced ToString method to show nested records, and list elements. 
+
+# Ver1.0: 
+  - Supports writing methods as lampda expressions.
+  - Supports Inheritance.
+  - Supports type inference for properties with default Values.</releaseNotes>
+    <tags>VB.NET, Records, Source Generators</tags>
+    <dependencies>
+      <group targetFramework=".NETStandard2.0">
+        <dependency id="Microsoft.CodeAnalysis.Analyzers" version="3.3.2" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.CodeAnalysis.VisualBasic" version="3.9.0-2.final" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="F:\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\bin\Release\netstandard2.0\RecordGenerator.dll" target="analyzers\dotnet\vb\RecordGenerator.dll" />
+    <file src="F:\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\bin\Release\netstandard2.0\RecordGenerator.deps.json" target="analyzers\dotnet\vb\RecordGenerator.deps.json" />
+    <file src="F:\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\bin\Release\netstandard2.0\RecordGenerator.pdb" target="analyzers\dotnet\vb\RecordGenerator.pdb" />
+  </files>
+</package>

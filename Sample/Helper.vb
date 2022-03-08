@@ -1,4 +1,9 @@
-﻿
+﻿Module Module1
+    Sub MySub(s As String)
+        Console.WriteLine(s)
+    End Sub
+End Module
+
 Public Class Test
     Public Property [Date] As Date
 End Class

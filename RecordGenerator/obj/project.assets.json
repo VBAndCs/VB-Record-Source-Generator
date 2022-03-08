@@ -846,7 +846,7 @@
     "C:\\Users\\MHG\\.nuget\\packages\\": {}
   },
   "project": {
-    "version": "2.0.1",
+    "version": "2.1.0",
     "restore": {
       "projectUniqueName": "F:\\_VS.NET\\_برامجي\\SGs\\RecordGenerator\\RecordGenerator\\RecordGenerator.vbproj",
       "projectName": "Visual-Basic-Record-Generator",
@@ -862,6 +862,7 @@
         "netstandard2.0"
       ],
       "sources": {
+        "E:\\1": {},
         "https://api.nuget.org/v3/index.json": {},
         "https://dotnet.myget.org/F/roslyn/api/v3/index.json": {}
       },

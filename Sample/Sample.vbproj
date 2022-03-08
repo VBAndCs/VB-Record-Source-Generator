@@ -7,10 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Class1.vb" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Remove="Records.rec" />
     <None Remove="Zero.rec" />
   </ItemGroup>
@@ -24,10 +20,6 @@
     <AdditionalFiles Include="TestTypes.rec" />
     <AdditionalFiles Include="TestValues.rec" />
     <AdditionalFiles Include="Student.rec" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Class1.vb" />
   </ItemGroup>
 </Project>
 

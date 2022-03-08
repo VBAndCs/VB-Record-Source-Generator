@@ -25,6 +25,12 @@ Module Program
     Public Const MyValue As Integer = 1
 End Module
 
+Module Module1
+   Public Sub MySub(s As String)
+        Console.WriteLine(s)
+    End Sub
+End Module
+
 Public Class Test
     Public Property [Date] As Date
 End Class

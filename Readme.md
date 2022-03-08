@@ -1,9 +1,10 @@
 ![Untitled](https://user-images.githubusercontent.com/48354902/122991838-c8fcb000-d3a5-11eb-98de-46e853a21272.png)
 
-# VB Record Source Generator v2.0
+# VB Record Source Generator v2.1
+V2.1 fixex some bugs.
 See what's new in V2.0 at the end of the file.
 
-An amazing new feature called `Source Generators` has been added to VB.NET since VS.NET 16.9.
+`Source Generators` is an amazing new feature added to VB.NET since VS.NET 16.9.
 It allows you to write code to generate another code that is added to your project in compilation time. 
 You can combine this feature with the Roslyn compiler powerful tools (like SyntaxFacyoty, SyntaxTree and SemanticModel) to parse, compile and analyze VB syntax and generate any additional code you want. 
 As an application of these concepts, I created a syntax for VB Records (quite similar to C# records). 
@@ -68,6 +69,7 @@ Public Class Student(
 ```
 
 Or just use keywords for simplicity:
+```VB.NET
 Public Class Student(
     ReadOnly ClassRoom = 0,
     Key University As String,
@@ -77,16 +79,27 @@ Public Class Student(
 ) Inherits Person
 ```
 
-The Student class inherits the Person class, and has a Print() method.
-Note how I use the  attributes/ keywords Key, ReadOnly and ReadOnlyKey (ReadOnly Key) to mark the properties. A key property is a property that will be examined when determining the equality of two records. 
+The Student class inherits the Person class, and has a Print() method. 
+Note how I use the  attributes/ keywords `Key`, `ReadOnly` and `ReadOnlyKey` (`ReadOnly Key`) to mark the properties. A key property is a property that will be examined when determining the equality of two records. 
 In C# record all properties are keys, but in our vb record we have the option to define our keys. You have many options here:
 1. Mark the whole class with the `<Record>` attribute (or use the Record keyword instead of the Class keyword) to tell the generator that it is an immutable class where all its properties are ReadOnly Keys.
 2. Mark the whole class with the `ReadOnly` attr/keyword to make all properties readonly but not keys then mark some individual properties with `Key` attr/keyword. 
-3. Mark the whole class with the `Key ` attr/keyword to make all properties keys then mark some individual properties with `ReadOnly` attr/keyword.
+3. Mark the whole class with the `Key` attr/keyword to make all properties keys then mark some individual properties with `ReadOnly` attr/keyword.
 4. Don't mark the class with any attr and use individual attrs/keywords to design your properties access as you need.
 
 Note that the class attrs overrides property attrs.
 So, you have all the options on the table, as you are not forces to generate immutable classes only, and not forced to use all properties as keys, but still can do both with one `Record` attr/keyword.
+
+Note that you can still declare a delegate property, by explicitly using As Clause. This sample shows you many ways to declare delegate properties, while there is only one way to declare a method:
+```VB
+public Record TestDelegate(
+    Delegate1 As Action, 
+    Delegate2 As Func(Of Integer),
+    Delegate3 As Action(Of String) = AddressOf MySub,
+    Delegate4 As Func(Of Integer, Integer) = Function(x) x + 1,
+    Method1 = Function( ) "This is a Function"
+)
+```
 
 You can also use generic type parameters after the name of the class such as:
 ```VB.NET
