@@ -169,30 +169,45 @@ Note that this is not needed with value types, unless they are nullable (Like `I
 
 
 # What's new in V2.0?
-* Allow to declare a namespace for the records:
+* Declare a namespace for the records:
    Add the Namespace statement as the first statement in the file, without `End Namespace`. 
-   Ex: `Namespace MyApp.Test`
+   Ex: 
+```VB
+Namespace MyApp.Test
 
-* Allow record to implement Interfaces.
-  Add the Implements statement after the record property list. If you need to inherit a class to, add the two statements separated by `,` in any order:
-  ```
+Class R1(X As MyType)
+```
+
+* Allow records to implement Interfaces:
+  Add the `Implements` statement after the record property list. If you need to inherit a class too, add the two statements separated by `,` in any order:
+  ```VB.NET
   Record Obj(
       Dispose = Sub() Console.WriteLine("Disposed")
   ) Implements IDisposable
   ```
 
-  Record properties and methods that match those of the interface are used to implement it in the generated class. I allowed functions to implement Subs, and readonly properties to implement read-write properties, but note that means that the property valuee can be chamge via the interface, dispit it is readonly.
-  Note that record syntax doesn't allow to implement Indexers nor generic methods, but you can create a partial class to implement then as you do in other classes.
+  Record properties and methods that match those of the interface are used to implement it in the generated class. I allowed `functions` to implement `subs`, and readonly properties to implement read-write properties, but this means that the property value can be changed via the interface, despite it is readonly.
+  Note that record syntax doesn't allow to implement Indexers nor generic methods, but you can create a partial class with the same record name, and implement them inside it.
 
-* Allow property-less records.   
+* Allow property-less records.
+   
 * Allow `As new` expression in property definition:
-   ` Record Test(Data As New List(Of T))
+```vb
+ Record Test(Data As New List(Of Integer))
+```
+
 * Records now are aware of some default imported namespaces:
-    like Sytem, System.Collections.Generic, and Microsoft.VisualBasic, so, you don't need to import them.
-* Allow `Fn() =>` syntax for lambda expressions. Fn is a legacy vb keyword for Functions. Ex:
-`Record Foo(Sum = Fn(a, b) => a + b)`
-I see this syntax better than C# syntax and VB syntax for lambdas, so, I supported it in ZML before, and now in RecGen.
+like `Sytem, System.Collections.Generic`, and `Microsoft.VisualBasic`, so, you don't need to import them.
+
+* Use `Fn() =>` syntax for lambda expressions. `Fn` is a legacy vb keyword for Functions. Ex:
+```vb
+Record Foo(
+    Sum = Fn(a, b) => a + b
+)
+```
+
+I see this syntax better than both C# and VB syntax for lambdas, so, I supported it in ZML before, and now in RecGen.
 
 
 # To Do:
-It will be helpful if .rec files have intellisense support, formatting, coloring, and syntax errors check.
+It will be helpful if `.rec` files have intellisense support, formatting, coloring, and syntax errors check.
