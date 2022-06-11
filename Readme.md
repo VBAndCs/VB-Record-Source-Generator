@@ -170,7 +170,7 @@ Note that this is not needed with value types, unless they are nullable (Like `I
 
 # What's new in V2.0?
 * Allow to declare a namespace for the records:
-   Add the Namespace statement as the first statement in the file, without `End Statement`. 
+   Add the Namespace statement as the first statement in the file, without `End Namespace`. 
    Ex: `Namespace MyApp.Test`
 
 * Allow record to implement Interfaces.
