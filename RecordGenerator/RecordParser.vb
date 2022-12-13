@@ -61,9 +61,10 @@ Public Class RecordParser
             Dim namespaces = CType(node, ImportsStatementSyntax).ImportsClauses
             For Each importsClause In namespaces
                 Dim ns = importsClause.ToString()
-                Dim exists = (From dns In DefaultNamespaces
-                              Where dns.Equals(ns, StringComparison.OrdinalIgnoreCase)
-                            ).Any
+                Dim exists = (
+                    From dns In DefaultNamespaces
+                    Where dns.Equals(ns, StringComparison.OrdinalIgnoreCase)
+                ).Any
 
                 If Not exists Then importsList.AppendLine("Imports " & ns)
             Next
@@ -448,10 +449,10 @@ Option Compare Binary
             WriteClone(className, typeParams, record)
             WriteToString(className, Properties, record)
             WriteEquals(className, typeParams, Properties, record, isClass)
+            WriteGetHashCode(Properties, record)
             WriteEqualityOps(className, typeParams, record)
             WriteTuplesOps(className, typeParams, Properties, record)
         End If
-
 
         record.Append(If(isClass, "End Class", "End Structure"))
 
@@ -897,7 +898,14 @@ $"    Public Shared Operator =(FirstRecord As {className}{typeParams}, secondRec
         record.AppendLine()
     End Sub
 
-    Public Shared Sub WriteEquals(className As String, typeParams As String, Properties As List(Of PropertyInfo), record As StringBuilder, isClass As Boolean)
+    Public Shared Sub WriteEquals(
+                    className As String,
+                    typeParams As String,
+                    Properties As List(Of PropertyInfo),
+                    record As StringBuilder,
+                    isClass As Boolean
+              )
+
         Dim keys = From p In Properties
                    Where p.IsKey
 
@@ -920,6 +928,27 @@ $"    Public Shared Operator =(FirstRecord As {className}{typeParams}, secondRec
         End If
         record.AppendLine()
     End Sub
+
+    Public Shared Sub WriteGetHashCode(
+                    Properties As List(Of PropertyInfo),
+                    record As StringBuilder
+              )
+
+        Dim keys = From p In Properties
+                   Where p.IsKey
+
+        If keys.Any Then
+            record.AppendLine($"    Public Overrides Function GetHashCode() As Integer")
+            record.AppendLine($"        Dim hash As New HashCode()")
+            For Each p In keys
+                record.AppendLine($"        hash.Add(_{p.Name})")
+            Next
+            record.AppendLine("        Return hash.ToHashCode()")
+            record.AppendLine("    End Function")
+            record.AppendLine()
+        End If
+    End Sub
+
 
     Private Shared Sub WriteToString(className As String, Properties As List(Of PropertyInfo), record As StringBuilder)
         record.AppendLine(

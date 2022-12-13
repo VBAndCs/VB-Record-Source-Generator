@@ -147,6 +147,20 @@ Public Key Structure [Record](
         result = sb.Replace(vbCrLf, vbLf).ToString()
         Assert.AreEqual(result, expected)
 
+        expected = <![CDATA[    Public Overrides Function GetHashCode() As Integer
+        Dim hash As New HashCode()
+        hash.Add(_Date)
+        hash.Add(_Name)
+        hash.Add(_Value)
+        Return hash.ToHashCode()
+    End Function
+
+]]>.Value
+        sb.Clear()
+        RecordParser.WriteGetHashCode(properties, sb)
+        result = sb.Replace(vbCrLf, vbLf).ToString()
+        Assert.AreEqual(result, expected)
+
     End Sub
 
 
@@ -219,6 +233,20 @@ Public Key Structure [Record](
         result = sb.Replace(vbCrLf, vbLf).ToString()
         Assert.AreEqual(result, expected)
 
+        expected = <![CDATA[    Public Overrides Function GetHashCode() As Integer
+        Dim hash As New HashCode()
+        hash.Add(_ID)
+        hash.Add(_Name)
+        hash.Add(_Books)
+        Return hash.ToHashCode()
+    End Function
+
+]]>.Value
+        sb.Clear()
+        RecordParser.WriteGetHashCode(properties, sb)
+        result = sb.Replace(vbCrLf, vbLf).ToString()
+        Assert.AreEqual(result, expected)
+
     End Sub
 
 
@@ -284,6 +312,20 @@ Public Key Structure [Record](
 ]]>.Value
         sb.Clear()
         RecordParser.WriteWith("Book", "", properties, sb)
+        result = sb.Replace(vbCrLf, vbLf).ToString()
+        Assert.AreEqual(result, expected)
+
+        expected = <![CDATA[    Public Overrides Function GetHashCode() As Integer
+        Dim hash As New HashCode()
+        hash.Add(_ID)
+        hash.Add(_Name)
+        hash.Add(_AuthorID)
+        Return hash.ToHashCode()
+    End Function
+
+]]>.Value
+        sb.Clear()
+        RecordParser.WriteGetHashCode(properties, sb)
         result = sb.Replace(vbCrLf, vbLf).ToString()
         Assert.AreEqual(result, expected)
 
@@ -590,6 +632,20 @@ Public Key Structure [Record](
         result = sb.Replace(vbCrLf, vbLf).ToString()
         Assert.AreEqual(result, expected)
 
+        expected = <![CDATA[    Public Overrides Function GetHashCode() As Integer
+        Dim hash As New HashCode()
+        hash.Add(_Name)
+        hash.Add(_ClassRoom)
+        hash.Add(_Grades)
+        Return hash.ToHashCode()
+    End Function
+
+]]>.Value
+        sb.Clear()
+        RecordParser.WriteGetHashCode(properties, sb)
+        result = sb.Replace(vbCrLf, vbLf).ToString()
+        Assert.AreEqual(result, expected)
+
     End Sub
 
 
@@ -647,6 +703,19 @@ Public Key Structure [Record](
 ]]>.Value
         sb.Clear()
         RecordParser.WriteWith("UniStudent", "", properties, sb)
+        result = sb.Replace(vbCrLf, vbLf).ToString()
+        Assert.AreEqual(result, expected)
+
+        expected = <![CDATA[    Public Overrides Function GetHashCode() As Integer
+        Dim hash As New HashCode()
+        hash.Add(_University)
+        hash.Add(_Collage)
+        Return hash.ToHashCode()
+    End Function
+
+]]>.Value
+        sb.Clear()
+        RecordParser.WriteGetHashCode(properties, sb)
         result = sb.Replace(vbCrLf, vbLf).ToString()
         Assert.AreEqual(result, expected)
 
@@ -886,6 +955,32 @@ Public Key Structure [Record](
 
         sb.Clear()
         RecordParser.WriteWith("UniStudent", "", properties, sb)
+        result = sb.Replace(vbCrLf, vbLf).ToString()
+        Assert.AreEqual(result, expected)
+
+        expected = <![CDATA[    Public Overrides Function GetHashCode() As Integer
+        Dim hash As New HashCode()
+        hash.Add(_A)
+        hash.Add(_B)
+        hash.Add(_C)
+        hash.Add(_D)
+        hash.Add(_E)
+        hash.Add(_F)
+        hash.Add(_G)
+        hash.Add(_H)
+        hash.Add(_I)
+        hash.Add(_J)
+        hash.Add(_K)
+        hash.Add(_L)
+        hash.Add(_M)
+        hash.Add(_N)
+        hash.Add(_O)
+        Return hash.ToHashCode()
+    End Function
+
+]]>.Value
+        sb.Clear()
+        RecordParser.WriteGetHashCode(properties, sb)
         result = sb.Replace(vbCrLf, vbLf).ToString()
         Assert.AreEqual(result, expected)
 

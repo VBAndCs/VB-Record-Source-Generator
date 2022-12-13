@@ -7,4 +7,3 @@ F:\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Release\netstan
 F:\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Release\netstandard2.0\RecordGenerator.vbproj.CoreCompileInputs.cache
 F:\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Release\netstandard2.0\RecordGenerator.dll
 F:\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Release\netstandard2.0\RecordGenerator.pdb
-F:\_VS.NET\_برامجي\SGs\RecordGenerator\RecordGenerator\obj\Release\netstandard2.0\RecordGenerator.vbproj.AssemblyReference.cache

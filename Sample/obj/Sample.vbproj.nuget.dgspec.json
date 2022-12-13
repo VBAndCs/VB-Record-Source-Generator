@@ -10,20 +10,19 @@
         "projectUniqueName": "F:\\_VS.NET\\_برامجي\\SGs\\RecordGenerator\\Sample\\Sample.vbproj",
         "projectName": "Sample",
         "projectPath": "F:\\_VS.NET\\_برامجي\\SGs\\RecordGenerator\\Sample\\Sample.vbproj",
-        "packagesPath": "C:\\Users\\MHG\\.nuget\\packages\\",
+        "packagesPath": "C:\\Users\\Mhmd\\.nuget\\packages\\",
         "outputPath": "F:\\_VS.NET\\_برامجي\\SGs\\RecordGenerator\\Sample\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\MHG\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Mhmd\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "net6.0"
         ],
         "sources": {
-          "E:\\1": {},
-          "https://api.nuget.org/v3/index.json": {},
-          "https://dotnet.myget.org/F/roslyn/api/v3/index.json": {}
+          "C:\\Program Files\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net6.0": {
@@ -55,7 +54,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.101\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.201\\RuntimeIdentifierGraph.json"
         }
       }
     }

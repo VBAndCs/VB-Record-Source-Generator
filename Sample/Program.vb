@@ -12,7 +12,6 @@ Module Program
 
         Console.WriteLine(auth1)
 
-
         Dim Adam As New Student(
             Now, 1, "Adam",
             ("New Yourk", "Hello St.", 10),
@@ -34,6 +33,26 @@ Module Program
             WithUniversity("Cairo University")
 
         Console.WriteLine(Mohmmad.Print)
+
+
+        Try
+            Dim auth2 As New Author(iD:=1, name:="Author1")
+            Dim authors As New Dictionary(Of Author, String) From {
+                {auth1, "test1"},
+                {auth2, "test2"}
+            }
+            Console.WriteLine(authors.Count)
+
+            Dim p1 As New Person(iD:=1, name:="Ali")
+            Dim p2 As New Person(iD:=1, name:="John")
+            ' The 2 persons has the same key, and the dictionary should refuse to add them both
+            Dim persons As New Dictionary(Of Person, String) From {
+                {p1, "test3"},
+                {p2, "test4"}
+            }
+        Catch ex As Exception
+            Console.WriteLine(ex.Message)
+        End Try
 
     End Sub
 

@@ -8,9 +8,9 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <PackageId>Visual-Basic-Record-Generator</PackageId>
+    <PackageId>RecGen</PackageId>
     <Title>RecGen: A VB.NET Record Source Generator</Title>
-    <PackageVersion>2.1.0.0</PackageVersion>
+    <PackageVersion>2.2.0.0</PackageVersion>
     <Authors>Mohammad Hamdy Ghanem</Authors>
     <PackageProjectUrl>https://github.com/VBAndCs/VB-Record-Source-Generator</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
@@ -20,8 +20,10 @@ See the readme for more info about how to use the Record Generator and the recor
       
 </Description>
     <PackageReleaseNotes>
+    # Ver 2.2:
+       Records now genrate the GetHashCode method, so that key properties are used in generating the hash, which is necessary when using rcords as keys in dictionaries.
 		# Ver 2.0:
-		- Allow to declare a namespace for the records
+		- Allow to declare a namespace for the records.
 		- Allow record to implement Interfaces.
 		- Allow property-less records.
 		- Allow `As new` expression in property definition.
@@ -42,7 +44,7 @@ See the readme for more info about how to use the Record Generator and the recor
   - Supports type inference for properties with default Values.</PackageReleaseNotes>
     <PackageTags>VB.NET, Records, Source Generators</PackageTags>
     <NoPackageAnalysis>true</NoPackageAnalysis>
-    <Version>2.1</Version>
+    <Version>2.2</Version>
   </PropertyGroup>
 
   <ItemGroup>

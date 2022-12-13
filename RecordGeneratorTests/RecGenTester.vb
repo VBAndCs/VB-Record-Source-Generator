@@ -11,7 +11,10 @@ Namespace RecordGeneratorTests
     <TestClass>
     Public Class RecGenTester
 
-        Private Function GetGeneratedOutput(source As String, additionalFile As String) As (Diagnostics As ImmutableArray(Of Diagnostic), Output As String)
+        Private Function GetGeneratedOutput(
+                         source As String,
+                         additionalFile As String
+                     ) As (Diagnostics As ImmutableArray(Of Diagnostic), Output As String)
 
             Dim compilation = GetCompilation(source)
 
@@ -19,16 +22,18 @@ Namespace RecordGeneratorTests
 
             Dim iaGenerator = {generator1}.ToImmutableArray
 
-            Dim driver = VisualBasicGeneratorDriver.Create(iaGenerator,
-                                                       {CType(New MyAdditionalText("__Just_For_Test__.rec", additionalFile), AdditionalText)}.ToImmutableArray,
-                                                       Nothing,
-                                                       Nothing)
+            Dim driver = VisualBasicGeneratorDriver.Create(
+                iaGenerator,
+                {CType(New MyAdditionalText("__Just_For_Test__.rec", additionalFile), AdditionalText)}.ToImmutableArray,
+                Nothing,
+                Nothing)
 
             Dim outputCompilation As Compilation = Nothing
             Dim generateDiagnostics As ImmutableArray(Of Diagnostic) = Nothing
             driver.RunGeneratorsAndUpdateCompilation(compilation, outputCompilation, generateDiagnostics)
-
-            Return (generateDiagnostics, outputCompilation.SyntaxTrees.Last().ToString())
+            Dim code = outputCompilation.SyntaxTrees.Last().ToString()
+            code = code.Replace(vbCrLf, vbLf).Replace(vbLf, vbCrLf)
+            Return (generateDiagnostics, code)
 
         End Function
 
@@ -53,7 +58,7 @@ Record TestSB(SB As StringBuilder)
             For Each diag In result.Diagnostics
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
-            Assert.AreEqual(GetHash(result.Output), "E241C5FF0BE927480D716AC7A9D50F57")
+            Assert.AreEqual(GetHash(result.Output), "BA6A930353F1B6288B7057500065120A")
         End Sub
 
         <TestMethod>
@@ -77,7 +82,7 @@ Public Record TestDelegate(
             For Each diag In result.Diagnostics
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
-            Assert.AreEqual(GetHash(result.Output), "7B1D54CEAFC2F7C56EC3C1952EBD9F13")
+            Assert.AreEqual(GetHash(result.Output), "6AC609F6405A1CE292ECE2FCE8890CC8")
         End Sub
 
         <TestMethod>
@@ -102,7 +107,7 @@ Public Record Test(
             For Each diag In result.Diagnostics
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
-            Assert.AreEqual(GetHash(result.Output), "57F5B2171FCAA55326E28289F18E93C8")
+            Assert.AreEqual(GetHash(result.Output), "3D4E5E7FEC445828C5CBB36C683F276A")
         End Sub
 
         <TestMethod>
@@ -128,7 +133,7 @@ Record Test(
             For Each diag In result.Diagnostics
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
-            Assert.AreEqual(GetHash(result.Output), "B220D670F79D15B1908AE3B6BAA1BA23")
+            Assert.AreEqual(GetHash(result.Output), "0202A2BB7F2F2BA52EC88B9CC9DEE23A")
         End Sub
 
         <TestMethod>
@@ -146,7 +151,7 @@ Record Test(
             For Each diag In result.Diagnostics
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
-            Assert.AreEqual(GetHash(result.Output), "D5103F1F7777F1F012C30D97E3302D1D")
+            Assert.AreEqual(GetHash(result.Output), "69A082A9236C1D781D76A60ABD0B1AA2")
         End Sub
 
 
@@ -176,7 +181,7 @@ Public Record Test(Of T1 As New, T2 As New)(
             For Each diag In result.Diagnostics
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
-            Assert.AreEqual(GetHash(result.Output), "8B5361FFA9C555604EDFDCDB2CF550C7")
+            Assert.AreEqual(GetHash(result.Output), "29AB7699F84EEE2B49A6F3477411B2FE")
         End Sub
 
 
@@ -195,7 +200,7 @@ Public Record Test(Of T1 As New, T2 As New)(
             For Each diag In result.Diagnostics
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
-            Assert.AreEqual(GetHash(result.Output), "9F69DDF92102595D96E7FFC5BD511778")
+            Assert.AreEqual(GetHash(result.Output), GetHash(result.Output), "67DEDCE36A62E63FD71ACB86911FF457")
         End Sub
 
         <TestMethod>
@@ -205,7 +210,7 @@ Public Record Test(Of T1 As New, T2 As New)(
             For Each diag In result.Diagnostics
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
-            Assert.AreEqual(GetHash(result.Output), "C61264779BA07BAA65FC41A075713C5E")
+            Assert.AreEqual(GetHash(result.Output), "7408C94C8BBFB5A0BD69897E6C0EDCE0")
         End Sub
 
         <TestMethod>
@@ -240,7 +245,7 @@ Public Key Class Author(
             For Each diag In result.Diagnostics
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
-            Assert.AreEqual(GetHash(result.Output), "1918D5A56BD6EC33B0E2ADF9D9A25868")
+            Assert.AreEqual(GetHash(result.Output), "3E740F51E1AF29DF86CD00DCCB65ABAD")
         End Sub
 
         <TestMethod>
@@ -255,7 +260,7 @@ Public Class Book(
             For Each diag In result.Diagnostics
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
-            Assert.AreEqual(GetHash(result.Output), "AF8DA514203BEE612CB91C1CA3292BE6")
+            Assert.AreEqual(GetHash(result.Output), "96382C25C6EE7ADD317D606C7C57026C")
         End Sub
 
         <TestMethod>
@@ -276,7 +281,7 @@ Public Class Person(
             For Each diag In result.Diagnostics
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
-            Assert.AreEqual(GetHash(result.Output), "A17F698F838C21C68B5B3695104C4175")
+            Assert.AreEqual(GetHash(result.Output), "415415D45D49FC83557A14058D293388")
         End Sub
 
         <TestMethod>
@@ -302,7 +307,7 @@ Public Record Student(
             For Each diag In result.Diagnostics
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
-            Assert.AreEqual(GetHash(result.Output), "5AFB8567FB05AD8C579F885749D36D3F")
+            Assert.AreEqual(GetHash(result.Output), "3B0B5A60F1D749DBECE3AB56069F22C2")
         End Sub
 
         <TestMethod>
@@ -317,7 +322,7 @@ Public Class TestEnums(
             For Each diag In result.Diagnostics
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
-            Assert.AreEqual(GetHash(result.Output), "CDBF77A523FF4ED2A6A67AA0087C62DA")
+            Assert.AreEqual(GetHash(result.Output), "33EC034925CC795E37B01679BFDBF6B6")
         End Sub
 
         <TestMethod>
@@ -371,7 +376,7 @@ Public Record Student(
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
 
-            Assert.AreEqual(GetHash(result.Output), "16027E70DBC3442A862FF2D1753932CD")
+            Assert.AreEqual(GetHash(result.Output), "CE795AAAB7D449F812E17DBA4A0D9B24")
 
         End Sub
 
@@ -395,7 +400,7 @@ Public Class Book(
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
 
-            Assert.AreEqual(GetHash(result.Output), "AF8DA514203BEE612CB91C1CA3292BE6")
+            Assert.AreEqual(GetHash(result.Output), GetHash(result.Output))
 
         End Sub
 
@@ -431,7 +436,7 @@ Record TestTuples(
                 Assert.AreNotEqual(diag.Id, "BC42502", diag.ToString())
             Next
 
-            Assert.AreEqual(GetHash(result.Output), "5A69D7408D6BAA15A58AC12DA6E5C56C")
+            Assert.AreEqual(GetHash(result.Output), "7897D07D50A1A7B4119A644C5D1FB990")
 
         End Sub
 

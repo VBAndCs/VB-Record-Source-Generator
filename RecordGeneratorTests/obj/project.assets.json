@@ -1804,7 +1804,7 @@
           "lib/netstandard1.3/System.Xml.XDocument.dll": {}
         }
       },
-      "Visual-Basic-Record-Generator/2.1.0": {
+      "RecGen/2.2.0": {
         "type": "project",
         "framework": ".NETStandard,Version=v2.0",
         "dependencies": {
@@ -1812,10 +1812,10 @@
           "Microsoft.CodeAnalysis.VisualBasic": "3.9.0-2.final"
         },
         "compile": {
-          "bin/placeholder/Visual-Basic-Record-Generator.dll": {}
+          "bin/placeholder/RecGen.dll": {}
         },
         "runtime": {
-          "bin/placeholder/Visual-Basic-Record-Generator.dll": {}
+          "bin/placeholder/RecGen.dll": {}
         }
       }
     }
@@ -6195,7 +6195,7 @@
         "system.xml.xdocument.nuspec"
       ]
     },
-    "Visual-Basic-Record-Generator/2.1.0": {
+    "RecGen/2.2.0": {
       "type": "project",
       "path": "../RecordGenerator/RecordGenerator.vbproj",
       "msbuildProject": "../RecordGenerator/RecordGenerator.vbproj"
@@ -6208,12 +6208,12 @@
       "Microsoft.CodeAnalysis.Analyzers >= 3.3.2",
       "Microsoft.CodeAnalysis.VisualBasic >= 3.9.0-2.final",
       "Microsoft.NET.Test.Sdk >= 16.7.1",
-      "Visual-Basic-Record-Generator >= 2.1.0",
+      "RecGen >= 2.2.0",
       "coverlet.collector >= 1.3.0"
     ]
   },
   "packageFolders": {
-    "C:\\Users\\MHG\\.nuget\\packages\\": {}
+    "C:\\Users\\Mhmd\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
@@ -6221,20 +6221,19 @@
       "projectUniqueName": "F:\\_VS.NET\\_برامجي\\SGs\\RecordGenerator\\RecordGeneratorTests\\RecordGenerator.Tests.vbproj",
       "projectName": "RecordGenerator.Tests",
       "projectPath": "F:\\_VS.NET\\_برامجي\\SGs\\RecordGenerator\\RecordGeneratorTests\\RecordGenerator.Tests.vbproj",
-      "packagesPath": "C:\\Users\\MHG\\.nuget\\packages\\",
+      "packagesPath": "C:\\Users\\Mhmd\\.nuget\\packages\\",
       "outputPath": "F:\\_VS.NET\\_برامجي\\SGs\\RecordGenerator\\RecordGeneratorTests\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\MHG\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\Mhmd\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "net6.0"
       ],
       "sources": {
-        "E:\\1": {},
-        "https://api.nuget.org/v3/index.json": {},
-        "https://dotnet.myget.org/F/roslyn/api/v3/index.json": {}
+        "C:\\Program Files\\Microsoft SDKs\\NuGetPackages\\": {},
+        "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "net6.0": {
@@ -6298,7 +6297,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.101\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.201\\RuntimeIdentifierGraph.json"
       }
     }
   }

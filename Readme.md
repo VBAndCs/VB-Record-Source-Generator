@@ -1,8 +1,7 @@
 ![Untitled](https://user-images.githubusercontent.com/48354902/122991838-c8fcb000-d3a5-11eb-98de-46e853a21272.png)
 
-# VB Record Source Generator v2.1
-V2.1 fixex some bugs.
-See what's new in V2.0 at the end of the file.
+# VB Record Source Generator v2.2
+Records now genrate the GetHashCode method, so that key properties are used in generating the hash, which is necessary when using rcords as keys in dictionaries.
 
 `Source Generators` is an amazing new feature added to VB.NET since VS.NET 16.9.
 It allows you to write code to generate another code that is added to your project in compilation time. 
@@ -29,7 +28,7 @@ Friend ReadOnly Class ROClass(A As Integer, B As Integer)
 # To use the Record Generator:
 1. Add the NuGet package to your project.
 ```
-PM> Install-Package Visual-Basic-Record-Generator
+PM> Install-Package RecGen
 ```
 
 2. Add one or more text files to your project, and change there extension to .rec.
@@ -169,30 +168,45 @@ Note that this is not needed with value types, unless they are nullable (Like `I
 
 
 # What's new in V2.0?
-* Allow to declare a namespace for the records:
-   Add the Namespace statement as the first statement in the file, without `End Statement`. 
-   Ex: `Namespace MyApp.Test`
+* Declare a namespace for the records:
+   Add the Namespace statement as the first statement in the file, without `End Namespace`. 
+   Ex: 
+```VB
+Namespace MyApp.Test
 
-* Allow record to implement Interfaces.
-  Add the Implements statement after the record property list. If you need to inherit a class to, add the two statements separated by `,` in any order:
-  ```
+Class R1(X As MyType)
+```
+
+* Allow records to implement Interfaces:
+  Add the `Implements` statement after the record property list. If you need to inherit a class too, add the two statements separated by `,` in any order:
+  ```VB.NET
   Record Obj(
       Dispose = Sub() Console.WriteLine("Disposed")
   ) Implements IDisposable
   ```
 
-  Record properties and methods that match those of the interface are used to implement it in the generated class. I allowed functions to implement Subs, and readonly properties to implement read-write properties, but note that means that the property valuee can be chamge via the interface, dispit it is readonly.
-  Note that record syntax doesn't allow to implement Indexers nor generic methods, but you can create a partial class to implement then as you do in other classes.
+  Record properties and methods that match those of the interface are used to implement it in the generated class. I allowed `functions` to implement `subs`, and readonly properties to implement read-write properties, but this means that the property value can be changed via the interface, despite it is readonly.
+  Note that record syntax doesn't allow to implement Indexers nor generic methods, but you can create a partial class with the same record name, and implement them inside it.
 
-* Allow property-less records.   
+* Allow property-less records.
+   
 * Allow `As new` expression in property definition:
-   ` Record Test(Data As New List(Of T))
+```vb
+ Record Test(Data As New List(Of Integer))
+```
+
 * Records now are aware of some default imported namespaces:
-    like Sytem, System.Collections.Generic, and Microsoft.VisualBasic, so, you don't need to import them.
-* Allow `Fn() =>` syntax for lambda expressions. Fn is a legacy vb keyword for Functions. Ex:
-`Record Foo(Sum = Fn(a, b) => a + b)`
-I see this syntax better than C# syntax and VB syntax for lambdas, so, I supported it in ZML before, and now in RecGen.
+like `Sytem, System.Collections.Generic`, and `Microsoft.VisualBasic`, so, you don't need to import them.
+
+* Use `Fn() =>` syntax for lambda expressions. `Fn` is a legacy vb keyword for Functions. Ex:
+```vb
+Record Foo(
+    Sum = Fn(a, b) => a + b
+)
+```
+
+I see this syntax better than both C# and VB syntax for lambdas, so, I supported it in ZML before, and now in RecGen.
 
 
 # To Do:
-It will be helpful if .rec files have intellisense support, formatting, coloring, and syntax errors check.
+It will be helpful if `.rec` files have intellisense support, formatting, coloring, and syntax errors check.

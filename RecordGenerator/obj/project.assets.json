@@ -843,28 +843,27 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\MHG\\.nuget\\packages\\": {}
+    "C:\\Users\\Mhmd\\.nuget\\packages\\": {}
   },
   "project": {
-    "version": "2.1.0",
+    "version": "2.2.0",
     "restore": {
       "projectUniqueName": "F:\\_VS.NET\\_برامجي\\SGs\\RecordGenerator\\RecordGenerator\\RecordGenerator.vbproj",
-      "projectName": "Visual-Basic-Record-Generator",
+      "projectName": "RecGen",
       "projectPath": "F:\\_VS.NET\\_برامجي\\SGs\\RecordGenerator\\RecordGenerator\\RecordGenerator.vbproj",
-      "packagesPath": "C:\\Users\\MHG\\.nuget\\packages\\",
+      "packagesPath": "C:\\Users\\Mhmd\\.nuget\\packages\\",
       "outputPath": "F:\\_VS.NET\\_برامجي\\SGs\\RecordGenerator\\RecordGenerator\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\MHG\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\Mhmd\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "netstandard2.0"
       ],
       "sources": {
-        "E:\\1": {},
-        "https://api.nuget.org/v3/index.json": {},
-        "https://dotnet.myget.org/F/roslyn/api/v3/index.json": {}
+        "C:\\Program Files\\Microsoft SDKs\\NuGetPackages\\": {},
+        "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "netstandard2.0": {
@@ -907,7 +906,7 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.101\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.201\\RuntimeIdentifierGraph.json"
       }
     }
   }

@@ -7,7 +7,7 @@
   "targets": {
     ".NETStandard,Version=v2.0": {},
     ".NETStandard,Version=v2.0/": {
-      "RecordGenerator/2.1": {
+      "RecordGenerator/2.2": {
         "dependencies": {
           "Microsoft.CodeAnalysis.Analyzers": "3.3.2",
           "Microsoft.CodeAnalysis.VisualBasic": "3.9.0-2.final",
@@ -218,7 +218,7 @@
     }
   },
   "libraries": {
-    "RecordGenerator/2.1": {
+    "RecordGenerator/2.2": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
